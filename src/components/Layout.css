@@ -1,0 +1,142 @@
+/* ── Layout shell ── */
+.app-root {
+  min-height: 100vh;
+  position: relative;
+  background:
+    linear-gradient(135deg, var(--bg-main) 0%, var(--bg-alt) 40%, var(--bg-main) 70%, var(--bg-main) 100%);
+  transition: background 0.4s ease;
+}
+
+.bg-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image:
+    radial-gradient(ellipse at 20% 20%, rgba(44, 118, 68, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+    url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.015'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+.content-wrapper {
+  position: relative;
+  z-index: 1;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 3rem;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+/* ── Site banner (logo + title, left of the header buttons) ── */
+.site-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.site-banner__icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-md);
+  border: 2px solid #ffffff;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.site-banner__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+
+.site-banner__title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--accent);
+  letter-spacing: 1px;
+  text-shadow: 0 0 20px var(--accent-glow);
+}
+
+.site-banner__subtitle {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+/* ── Ko-fi button (accent-themed) ── */
+.kofi-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--accent);
+  color: var(--accent-text);
+  text-decoration: none;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  font-weight: 700;
+  padding: 10px 16px;
+  border: 1px solid var(--accent-border);
+  border-radius: 100px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease;
+  font-size: 15px;
+}
+
+.kofi-btn:hover {
+  transform: scale(1.03);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15), 0 0 18px var(--accent-glow);
+}
+
+.header-desktop {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  height: 140px;
+}
+
+/* Hidden header for search results */
+.seo-heading {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 840px) {
+  header > div:first-child {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  header > div:first-child a {
+    flex: 1;
+    text-align: center;
+  }
+
+  .header-desktop {
+    display: none;
+  }
+
+  .kofi-btn img {
+    display: block;
+    flex-shrink: 0;
+  }
+
+  header > div:last-child {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

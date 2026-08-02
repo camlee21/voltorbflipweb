@@ -1,0 +1,31 @@
+.tile {
+  width: var(--tile-size, 64px);
+  height: var(--tile-size, 64px);
+  padding: 0;
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-recessed);
+  cursor: pointer;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.12s ease, transform 0.08s ease;
+}
+
+.tile:hover:not(:disabled) {
+  border-color: var(--color-accent);
+}
+
+.tile:active {
+  transform: scale(0.96);
+}
+
+.tile:disabled {
+  cursor: default;
+}
+
+.tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
