@@ -148,12 +148,12 @@ export default function FreePlayGame() {
       setMessage("Level beaten!");
       setNewGame(false);
       setGrid(revealBoard(grid));
-      setTimeout(() => {
-        startLevel(level);
-        setNewGame(true);
-        setScore(1);
-        setMessage("");
-      }, 1000);
+      // setTimeout(() => {
+      //   startLevel(level);
+      //   setNewGame(true);
+      //   setScore(1);
+      //   setMessage("");
+      // }, 1000);
     } else if (score === maxScore) {
       setMessage("Reset to start a new game.");
     } else {

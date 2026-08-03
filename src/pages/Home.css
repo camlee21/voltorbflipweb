@@ -1,0 +1,62 @@
+.mode-toggle-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 30px;
+}
+
+/* ── Mode toggle ── */
+.mode-toggle {
+  position: relative;
+  display: flex;
+  background-color: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 4px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  width: 280px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.mode-toggle-slider {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  bottom: 4px;
+  width: calc(50% - 4px);
+  background-color: var(--accent);
+  border-radius: 9999px;
+  transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.3s ease;
+  box-shadow: 0 4px 12px var(--accent-glow);
+  z-index: 1;
+}
+
+.mode-toggle-btn {
+  flex: 1;
+  position: relative;
+  z-index: 2;
+  background: none;
+  border: none;
+  padding: 10px 0;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: color 0.2s ease;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.mode-toggle-btn.active {
+  color: #ffffff;
+}
+
+@media (max-width: 840px) {
+  .mode-toggle {
+    width: 100%;
+    max-width: 340px;
+  }
+}
