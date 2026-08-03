@@ -1,11 +1,217 @@
-.rogue-game-page {
+/* ── Rogue mode additions (works alongside FreePlayGame.css) ─────────── */
+
+.powers-bar {
   width: 100%;
   display: flex;
-  justify-content: center;
-  padding: 48px 0;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-surface-recessed) 90%, transparent);
+  border: 1px solid var(--color-border-strong);
 }
 
-.rogue-game-placeholder {
+.powers-bar__label {
   font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
   color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.powers-bar__icons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.powers-bar__empty {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.power-icon {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--color-border-strong);
+  background: var(--color-surface);
+  cursor: pointer;
+  flex-shrink: 0;
+  overflow: hidden;
+  transition: border-color 0.12s ease, transform 0.08s ease;
+}
+
+.power-icon:hover {
+  border-color: var(--color-accent);
+  transform: translateY(-1px);
+}
+
+.power-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.power-icon__badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: var(--color-text);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 0.6rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* Sidebar additions ------------------------------------------------------ */
+
+.rogue-level-display {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--color-accent);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--color-accent) 40%, transparent);
+}
+
+.rogue-scores {
+  display: flex;
+  gap: 10px;
+}
+
+.rogue-scores .scoreboard {
+  flex: 1;
+  padding: 12px;
+}
+
+.rogue-scores .scoreboard__value {
+  font-size: 1.3rem;
+}
+
+.btn--peek.armed-peek {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 35%, transparent);
+}
+
+/* Popups ------------------------------------------------------------------ */
+
+.rogue-popup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.rogue-popup {
+  width: 100%;
+  max-width: 420px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  padding: 28px 24px;
+  text-align: center;
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.7);
+}
+
+.rogue-popup__title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--color-accent);
+  margin-bottom: 10px;
+}
+
+.rogue-popup__subtitle {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  margin-bottom: 20px;
+}
+
+.rogue-popup__choices {
+  display: flex;
+  gap: 12px;
+}
+
+.rogue-popup__choice {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-strong);
+  background: color-mix(in srgb, var(--color-surface-raised) 90%, transparent);
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.1s ease, background 0.15s ease;
+}
+
+.rogue-popup__choice:hover {
+  border-color: var(--color-accent);
+  transform: translateY(-2px);
+  background: color-mix(in srgb, var(--color-surface-raised) 100%, var(--color-accent) 6%);
+}
+
+.rogue-popup__choice img {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+.rogue-popup__choice-emoji {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.rogue-popup__choice-title {
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: var(--color-text);
+}
+
+.rogue-popup__choice-desc {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.rogue-popup__info-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  margin: 0 auto 12px;
+}
+
+.rogue-popup__cta {
+  width: 100%;
+}
+
+@media (max-width: 480px) {
+  .rogue-popup__choices {
+    flex-direction: column;
+  }
 }
