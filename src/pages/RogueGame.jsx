@@ -16,6 +16,7 @@ import "./RogueGame.css";
 
 const THEME = "classic";
 const VOLTORB_ICON = "/sprites/counters/voltorb-count-icon.png";
+const STAGGER_MS = 45;
 
 const POWERS = {
   Protect: {
@@ -97,6 +98,10 @@ export default function RogueGame() {
   const [showGameOverPopup, setShowGameOverPopup] = useState(false);
   const [rewardChoice, setRewardChoice] = useState(null); // power offered this level-up
 
+  // Gates the column-stagger animation so a normal single-tile flip (and
+  // tempFlip's Protect/Peek/Mega Stone peeks) stay instant.
+  const [revealing, setRevealing] = useState(false);
+
   const [pendingAction, setPendingAction] = useState(null); // mirrors Free Play's confirm-arm reset
   const resetBtnRef = useRef(null);
 
@@ -128,6 +133,7 @@ export default function RogueGame() {
     let workingGrid = newGrid;
     let startScore = 1;
     firstFlipRef.current = false;
+    setRevealing(false);
 
     if (powers.includes("Reveal 3")) {
         const flat = [];
@@ -237,6 +243,7 @@ export default function RogueGame() {
     setMessage("Oops! You lost!");
     setTimeout(() => {
         setGrid(revealBoard(newGrid));
+        setRevealing(true);
         const scoreMult = noOnesOn ? 2 : 1;
         setTotalScore((t) => t + score * scoreMult);
         // setShowGameOverPopup(true);
@@ -311,6 +318,11 @@ export default function RogueGame() {
     setPendingAction("reset");
   }
 
+  function flipDelayFor(col, tile) {
+    if (!revealing || !tile.revealed) return 0;
+    return col * STAGGER_MS;
+  }
+
   if (grid.length === 0) {
     return (
       <div className="free-play-page">
@@ -360,6 +372,7 @@ export default function RogueGame() {
                     disabled={gameOver}
                     onFlip={() => handleFlip(r, c)}
                     onNote={() => toggleNote(r, c)}
+                    flipDelay={flipDelayFor(c, tile)}
                   />
                 ))}
                 {(() => {

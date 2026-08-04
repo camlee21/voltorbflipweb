@@ -13,6 +13,7 @@ import "./Classic.css";
 
 const THEME = "classic";
 const VOLTORB_ICON = "/sprites/counters/voltorb-count-icon.png";
+const STAGGER_MS = 45;
 
 function buildLevel(levelNumber) {
   const pattern = getRandomPatternForLevel(levelNumber);
@@ -34,6 +35,12 @@ export default function Classic() {
   const [maxScore, setMaxScore] = useState(1);
   const [gameOver, setGameOver] = useState(false);
   const [message, setMessage] = useState("");
+
+  // Staggered-reveal state: `origin` is the tile the cascade ripples out from
+  // (the clicked Voltorb on a loss, or null for the win reveal's diagonal wave).
+  // `revealing` gates the stagger so a normal single-tile flip stays instant.
+  const [origin, setOrigin] = useState(null);
+  const [revealing, setRevealing] = useState(false);
 
   const [showGameOverPopup, setShowGameOverPopup] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
@@ -60,6 +67,8 @@ export default function Classic() {
     setGrid(newGrid);
     setMaxScore(newMax);
     setScore(1);
+    setOrigin(null);
+    setRevealing(false);
   }
 
   function handleFlip(row, col) {
@@ -84,10 +93,12 @@ export default function Classic() {
     setGrid(newGrid);
     setGameOver(true);
     setMessage("Oops! You lost!");
+    setOrigin({ row, col });
     setTimeout(() => {
       setGrid(revealBoard(newGrid));
+      setRevealing(true);
       setTotalScore((t) => t + score);
-    //   setShowGameOverPopup(true);
+      //   setShowGameOverPopup(true);
     }, 500);
   }
 
@@ -106,7 +117,9 @@ export default function Classic() {
       return;
     }
     setMessage("Level beaten!");
+    setOrigin(null); // no clicked tile to ripple from — use the diagonal wave
     setGrid((g) => revealBoard(g));
+    setRevealing(true);
     setTimeout(() => {
       const nextLevel = level + 1;
       setTotalScore((t) => t + score);
@@ -134,6 +147,11 @@ export default function Classic() {
     setPendingAction("reset");
   }
 
+  function flipDelayFor(row, col, tile) {
+    if (!revealing || !tile.revealed) return 0;
+    return col * STAGGER_MS;
+  }
+
   if (grid.length === 0) {
     return (
       <div className="free-play-page">
@@ -157,6 +175,7 @@ export default function Classic() {
                     disabled={gameOver}
                     onFlip={() => handleFlip(r, c)}
                     onNote={() => toggleNote(r, c)}
+                    flipDelay={flipDelayFor(r, c, tile)}
                   />
                 ))}
                 {(() => {

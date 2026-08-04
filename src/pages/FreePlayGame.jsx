@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 
 import Tile from "../components/Tile";
@@ -19,6 +18,7 @@ const LEVELS = [1, 2, 3, 4, 5, 6, 7, 8];
 const BACKGROUND_IMAGE = `/sprites/voltorb_background.png`;
 const VOLTORB_ICON = "/sprites/counters/voltorb-count-icon.png";
 const POINTS_ICON = "/sprites/counters/points-count-icon-placeholder.png";
+const STAGGER_MS = 45;
 
 function getMessageTone(msg) {
   if (!msg) return "";
@@ -36,6 +36,9 @@ export default function FreePlayGame() {
   const [maxScore, setMaxScore] = useState(1);
   const [message, setMessage] = useState("");
   const [pendingAction, setPendingAction] = useState(null);
+
+  // Gates the column-stagger animation so a normal single-tile flip stays instant.
+  const [revealing, setRevealing] = useState(false);
 
   // Guards against the level-change effect firing on first mount (we already
   // build the initial board separately) and against acting on a stale level
@@ -59,6 +62,7 @@ export default function FreePlayGame() {
     setNewGame(true);
     setGameOver(false);
     setMessage("");
+    setRevealing(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [level]);
 
@@ -100,6 +104,7 @@ export default function FreePlayGame() {
       setMessage("Oops! You lost!");
       setTimeout(() => {
         setGrid(revealBoard(newGrid));
+        setRevealing(true);
       }, 500);
     }
   }
@@ -123,10 +128,12 @@ export default function FreePlayGame() {
     setNewGame(true);
     setGameOver(false);
     setMessage("");
+    setRevealing(false);
   }
 
   function handleReveal() {
     setGrid(revealBoard(grid));
+    setRevealing(true);
   }
 
   function handleDangerClick(action) {
@@ -148,6 +155,7 @@ export default function FreePlayGame() {
       setMessage("Level beaten!");
       setNewGame(false);
       setGrid(revealBoard(grid));
+      setRevealing(true);
       // setTimeout(() => {
       //   startLevel(level);
       //   setNewGame(true);
@@ -159,6 +167,11 @@ export default function FreePlayGame() {
     } else {
       setMessage("Game unfinished!");
     }
+  }
+
+  function flipDelayFor(col, tile) {
+    if (!revealing || !tile.revealed) return 0;
+    return col * STAGGER_MS;
   }
 
   if (grid.length === 0) {
@@ -185,6 +198,7 @@ export default function FreePlayGame() {
                     disabled={gameOver}
                     onFlip={() => handleFlip(r, c)}
                     onNote={() => handleRightClickNote(r, c)}
+                    flipDelay={flipDelayFor(c, tile)}
                   />
                 ))}
                 {(() => {

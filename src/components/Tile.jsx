@@ -1,14 +1,10 @@
 import "./Tile.css";
 
-// Port of TileView from VoltorbStructs.swift.
-// theme is a folder-name prefix, e.g. "classic" -> /sprites/0_classic.png etc.
-export default function Tile({ tile, theme, onFlip, onNote, disabled }) {
-  const isFront = tile.revealed || tile.noted;
-
-  const frontSrc = tile.noted
+export default function Tile({ tile, theme, onFlip, onNote, disabled, flipDelay = 0 }) {
+  const frontSrc = `/sprites/${tile.value}_${theme}.png`;
+  const backSrc = tile.noted
     ? `/sprites/NotedTile_${theme}.png`
-    : `/sprites/${tile.value}_${theme}.png`;
-  const backSrc = `/sprites/UnknownTile_${theme}.png`;
+    : `/sprites/UnknownTile_${theme}.png`;
 
   function handleClick() {
     if (disabled) return;
@@ -16,7 +12,6 @@ export default function Tile({ tile, theme, onFlip, onNote, disabled }) {
   }
 
   function handleContextMenu(e) {
-    // Right-click on desktop acts like the long-press "note" gesture in the app.
     e.preventDefault();
     if (disabled) return;
     onNote();
@@ -29,9 +24,19 @@ export default function Tile({ tile, theme, onFlip, onNote, disabled }) {
       onClick={handleClick}
       onContextMenu={handleContextMenu}
       disabled={disabled || tile.revealed}
-      aria-label={isFront ? `Revealed tile: ${tile.value}` : "Hidden tile"}
+      aria-label={tile.revealed ? `Revealed tile: ${tile.value}` : "Hidden tile"}
     >
-      <img src={isFront ? frontSrc : backSrc} alt="" draggable={false} />
+      <div
+        className={`tile-flip ${tile.revealed ? "is-flipped" : ""}`}
+        style={{ "--flip-delay": `${flipDelay}ms` }}
+      >
+        <div className="tile-face tile-face-back">
+          <img src={backSrc} alt="" draggable={false} />
+        </div>
+        <div className="tile-face tile-face-front">
+          <img src={frontSrc} alt="" draggable={false} />
+        </div>
+      </div>
     </button>
   );
 }
