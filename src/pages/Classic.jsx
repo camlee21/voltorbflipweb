@@ -13,7 +13,7 @@ import "./Classic.css";
 
 const THEME = "classic";
 const VOLTORB_ICON = "/sprites/counters/voltorb-count-icon.png";
-const STAGGER_MS = 45;
+const STAGGER_MS = 90;
 
 function buildLevel(levelNumber) {
   const pattern = getRandomPatternForLevel(levelNumber);
@@ -42,6 +42,10 @@ export default function Classic() {
   const [origin, setOrigin] = useState(null);
   const [revealing, setRevealing] = useState(false);
 
+  // True once a level's been successfully submitted and its board revealed,
+  // until the player explicitly advances — swaps Submit for a Next Level button.
+  const [awaitingNextLevel, setAwaitingNextLevel] = useState(false);
+
   const [showGameOverPopup, setShowGameOverPopup] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
   const resetBtnRef = useRef(null);
@@ -69,6 +73,7 @@ export default function Classic() {
     setScore(1);
     setOrigin(null);
     setRevealing(false);
+    setAwaitingNextLevel(false);
   }
 
   function handleFlip(row, col) {
@@ -120,13 +125,15 @@ export default function Classic() {
     setOrigin(null); // no clicked tile to ripple from — use the diagonal wave
     setGrid((g) => revealBoard(g));
     setRevealing(true);
-    setTimeout(() => {
-      const nextLevel = level + 1;
-      setTotalScore((t) => t + score);
-      setLevel(nextLevel);
-      startNewLevel(nextLevel);
-      setMessage("");
-    }, 1000);
+    setAwaitingNextLevel(true);
+  }
+
+  function handleNextLevel() {
+    const nextLevel = level + 1;
+    setTotalScore((t) => t + score);
+    setLevel(nextLevel);
+    startNewLevel(nextLevel);
+    setMessage("");
   }
 
   function handleNewRun() {
@@ -223,9 +230,15 @@ export default function Classic() {
             >
               New Run
             </button>
-            <button type="button" className="btn btn--primary" onClick={handleSubmit} disabled={gameOver}>
-              Submit
-            </button>
+            {awaitingNextLevel ? (
+              <button type="button" className="btn btn--primary" onClick={handleNextLevel}>
+                Next Level
+              </button>
+            ) : (
+              <button type="button" className="btn btn--primary" onClick={handleSubmit} disabled={gameOver}>
+                Submit
+              </button>
+            )}
           </div>
         </aside>
       </main>

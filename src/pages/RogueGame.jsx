@@ -16,7 +16,7 @@ import "./RogueGame.css";
 
 const THEME = "classic";
 const VOLTORB_ICON = "/sprites/counters/voltorb-count-icon.png";
-const STAGGER_MS = 45;
+const STAGGER_MS = 90;
 
 const POWERS = {
   Protect: {

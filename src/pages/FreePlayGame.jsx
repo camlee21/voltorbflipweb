@@ -18,7 +18,7 @@ const LEVELS = [1, 2, 3, 4, 5, 6, 7, 8];
 const BACKGROUND_IMAGE = `/sprites/voltorb_background.png`;
 const VOLTORB_ICON = "/sprites/counters/voltorb-count-icon.png";
 const POINTS_ICON = "/sprites/counters/points-count-icon-placeholder.png";
-const STAGGER_MS = 45;
+const STAGGER_MS = 90;
 
 function getMessageTone(msg) {
   if (!msg) return "";
