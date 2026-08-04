@@ -23,19 +23,19 @@
   z-index: 1;
   max-width: 960px;
   margin: 0 auto;
-  padding: 2rem 1.5rem 3rem;
+  padding: 0.2rem 1.5rem 3rem;
 }
 
 header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 /* ── Site banner (logo + title, left of the header buttons) ── */
 .site-banner {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
 }
 
 .site-banner__icon {
