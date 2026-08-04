@@ -22,7 +22,7 @@ export default function Layout({ children }) {
             <img src="/sprites/banner_icon.png" alt="" className="site-banner__icon" />
             <div className="site-banner__titles">
               <span className="site-banner__title">VOLTORB FLIP</span>
-              <span className="site-banner__subtitle">Free Play</span>
+              <span className="site-banner__subtitle">By Draglash</span>
             </div>
           </div>
 

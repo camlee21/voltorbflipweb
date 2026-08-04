@@ -349,7 +349,7 @@ export default function RogueGame() {
             </div>
           </div>
 
-          <div className="board" style={{ "--tile-size": "64px" }}>
+          <div className="board" style={{ "--tile-size": "80px" }}>
             {grid.map((row, r) => (
               <div key={r} style={{ display: "contents" }}>
                 {row.map((tile, c) => (

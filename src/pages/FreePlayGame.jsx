@@ -222,7 +222,7 @@ export default function FreePlayGame() {
           </div>
 
           <div className="scoreboard">
-            <span className="scoreboard__label">Score</span>
+            <span className="scoreboard__label">Lvl. Score</span>
             <span className="scoreboard__value">{score}</span>
           </div>
 

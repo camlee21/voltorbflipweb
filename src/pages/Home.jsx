@@ -1,10 +1,18 @@
 import { useState } from "react";
+import Classic from "./Classic";
 import FreePlayGame from "./FreePlayGame";
 import RogueGame from "./RogueGame";
 import "./Home.css";
 
+const MODES = [
+  { key: "classic", label: "Classic" },
+  { key: "freeplay", label: "Free Play" },
+  { key: "rogue", label: "Rogue" },
+];
+
 export default function Home() {
-  const [mode, setMode] = useState("freeplay");
+  const [mode, setMode] = useState("classic");
+  const activeIndex = MODES.findIndex((m) => m.key === mode);
 
   return (
     <>
@@ -12,26 +20,24 @@ export default function Home() {
         <div className="mode-toggle">
           <div
             className="mode-toggle-slider"
-            style={{ transform: mode === "rogue" ? "translateX(100%)" : "translateX(0%)" }}
+            style={{ transform: `translateX(${activeIndex * 100}%)` }}
           />
-          <button
-            type="button"
-            onClick={() => setMode("freeplay")}
-            className={`mode-toggle-btn ${mode === "freeplay" ? "active" : ""}`}
-          >
-            Free Play
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("rogue")}
-            className={`mode-toggle-btn ${mode === "rogue" ? "active" : ""}`}
-          >
-            Rogue
-          </button>
+          {MODES.map((m) => (
+            <button
+              key={m.key}
+              type="button"
+              onClick={() => setMode(m.key)}
+              className={`mode-toggle-btn ${mode === m.key ? "active" : ""}`}
+            >
+              {m.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {mode === "freeplay" ? <FreePlayGame /> : <RogueGame />}
+      {mode === "classic" && <Classic />}
+      {mode === "freeplay" && <FreePlayGame />}
+      {mode === "rogue" && <RogueGame />}
     </>
   );
 }
