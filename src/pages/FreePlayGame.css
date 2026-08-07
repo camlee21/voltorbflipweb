@@ -25,7 +25,7 @@
   width: 100%;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 800px) {
   .layout {
     flex-direction: column;
     align-items: center;
@@ -80,7 +80,7 @@
   flex-shrink: 0;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 800px) {
   .sidebar {
     width: 100%;
     max-width: 380px;
@@ -255,4 +255,15 @@
   background: var(--color-accent-strong);
   transform: translateY(-1px);
   box-shadow: 0 6px 18px color-mix(in srgb, var(--color-accent) 45%, transparent);
+}
+
+/* ── Mobile scaling — synced to Layout.css's 800px header breakpoint ── */
+@media (max-width: 800px) {
+  .board-panel {
+    padding: clamp(10px, 3vw, 16px);
+  }
+
+  .board {
+    gap: clamp(4px, 1.5vw, 10px);
+  }
 }

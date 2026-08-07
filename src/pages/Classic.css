@@ -61,3 +61,29 @@
 .classic-popup__cta {
   width: 100%;
 }
+
+/* ── Mobile layout (Classic only) — synced to Layout.css's 800px header breakpoint ── */
+@media (max-width: 800px) {
+  .classic-page .layout {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 20px;
+  }
+
+  .classic-page .sidebar {
+    width: 100%;
+    max-width: 380px;
+  }
+
+  .classic-page .board-panel {
+    padding: clamp(10px, 3vw, 16px);
+    width: fit-content;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .classic-page .board {
+    gap: clamp(4px, 1.5vw, 10px);
+  }
+}

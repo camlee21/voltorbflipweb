@@ -210,8 +210,15 @@
   width: 100%;
 }
 
-@media (max-width: 480px) {
-  .rogue-popup__choices {
-    flex-direction: column;
+/* ── Mobile scaling — synced to Layout.css's 800px header breakpoint ── */
+@media (max-width: 800px) {
+  .powers-bar {
+    padding: clamp(6px, 2vw, 10px) clamp(8px, 2.5vw, 14px);
+    gap: 8px;
+  }
+
+  .power-icon {
+    width: clamp(32px, 8vw, 44px);
+    height: clamp(32px, 8vw, 44px);
   }
 }

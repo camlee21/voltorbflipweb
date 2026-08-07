@@ -46,6 +46,28 @@ export default function Layout({ children }) {
             </div>
           </div>
         </div>
+
+          {/* Mobile layout: single compact row so the board keeps most of the screen */}
+          <div className="header-mobile">
+            <div className="site-banner site-banner--mobile">
+              <img src="/sprites/banner_icon.png" alt="" className="site-banner__icon" />
+              <div className="site-banner__titles">
+                <span className="site-banner__title">VOLTORB FLIP</span>
+                <span className="site-banner__subtitle">By Draglash</span>
+              </div>
+            </div>
+
+            <div className="header-mobile__actions">
+              <a href="https://x.com/drag1ash" target="_blank" rel="noopener noreferrer" title="Twitter / X" className="icon-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--text)">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                </svg>
+              </a>
+              <a href="https://ko-fi.com/I8P7210YG4" target="_blank" rel="noopener noreferrer" title="Support me on Ko-fi" className="icon-btn kofi-btn--icon-only">
+                <img src="https://storage.ko-fi.com/cdn/cup-border.png" alt="Ko-fi cup" style={{ height: '16px', width: '16px', objectFit: 'contain', display: 'block' }} />
+              </a>
+            </div>
+          </div>
         </header>
 
         {children}
