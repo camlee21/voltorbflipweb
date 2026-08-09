@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import Tile from "../components/Tile";
 import Counter from "../components/Counter";
+import { suppressBoardContextMenu } from "../utils/boardContextMenu";
 
 import {
   getRandomPatternForLevel,
@@ -361,7 +362,7 @@ export default function RogueGame() {
             </div>
           </div>
 
-          <div className="board" style={{ "--tile-size": "clamp(40px, 12vw, 80px)" }}>
+          <div className="board" style={{ "--tile-size": "clamp(40px, 12vw, 80px)" }} onContextMenu={suppressBoardContextMenu}>
             {grid.map((row, r) => (
               <div key={r} style={{ display: "contents" }}>
                 {row.map((tile, c) => (
