@@ -12,12 +12,17 @@ import {
   revealBoard,
 } from "../game/gameLogic";
 
+import { addPokedollars } from "../utils/pokedollars";
+
 import "./FreePlayGame.css";
 import "./RogueGame.css";
 
 const THEME = "classic";
 const VOLTORB_ICON = "/sprites/counters/voltorb-count-icon.png";
 const STAGGER_MS = 90;
+
+// How long the "You have earned X coins!" toast stays visible.
+const COIN_NOTIF_MS = 3000;
 
 const POWERS = {
   Protect: {
@@ -99,6 +104,11 @@ export default function RogueGame() {
   const [showGameOverPopup, setShowGameOverPopup] = useState(false);
   const [rewardChoice, setRewardChoice] = useState(null); // power offered this level-up
 
+  // "You have earned X coins!" toast — shown when a run ends in a loss and
+  // the final total score gets banked as coins.
+  const [coinNotification, setCoinNotification] = useState(null);
+  const coinNotifTimeoutRef = useRef(null);
+
   // Gates the column-stagger animation so a normal single-tile flip (and
   // tempFlip's Protect/Peek/Mega Stone peeks) stay instant.
   const [revealing, setRevealing] = useState(false);
@@ -113,8 +123,20 @@ export default function RogueGame() {
   const moneyMultiplier = currentPowers.includes("Money Multiplier") ? 2 : 1;
   const firstFlipRef = useRef(false);
 
+  function showCoinNotification(amount) {
+    setCoinNotification(amount);
+    if (coinNotifTimeoutRef.current) clearTimeout(coinNotifTimeoutRef.current);
+    coinNotifTimeoutRef.current = setTimeout(() => {
+      setCoinNotification(null);
+      coinNotifTimeoutRef.current = null;
+    }, COIN_NOTIF_MS);
+  }
+
   useEffect(() => {
     startNewLevel(1, []);
+    return () => {
+      if (coinNotifTimeoutRef.current) clearTimeout(coinNotifTimeoutRef.current);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -237,6 +259,7 @@ export default function RogueGame() {
         return;
     }
 
+    // No Protect left, no Mega Stone save - the run ends here.
     const newGrid = grid.map((r) => r.map((t) => ({ ...t })));
     newGrid[row][col].revealed = true;
     setGrid(newGrid);
@@ -246,7 +269,14 @@ export default function RogueGame() {
         setGrid(revealBoard(newGrid));
         setRevealing(true);
         const scoreMult = noOnesOn ? 2 : 1;
-        setTotalScore((t) => t + score * scoreMult);
+        const finalTotal = totalScore + score * scoreMult;
+        setTotalScore(finalTotal);
+
+        // Losing a run banks the final total score as coins.
+        if (finalTotal > 0) {
+          addPokedollars(finalTotal);
+          showCoinNotification(finalTotal);
+        }
         // setShowGameOverPopup(true);
     }, 500);
     }
@@ -334,6 +364,37 @@ export default function RogueGame() {
 
   return (
     <div className="free-play-page rogue-page">
+      {coinNotification !== null && (
+        <div
+          role="status"
+          style={{
+            position: "fixed",
+            top: "20px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 1000,
+            padding: "10px 18px",
+            borderRadius: "10px",
+            background: "rgba(20, 160, 90, 0.95)",
+            color: "#fff",
+            fontWeight: 600,
+            fontSize: "14px",
+            boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
+            animation: "coin-toast-fade 3s ease forwards",
+          }}
+        >
+          You have earned {coinNotification.toLocaleString()} coins!
+        </div>
+      )}
+      <style>{`
+        @keyframes coin-toast-fade {
+          0% { opacity: 0; transform: translate(-50%, -8px); }
+          10% { opacity: 1; transform: translate(-50%, 0); }
+          85% { opacity: 1; transform: translate(-50%, 0); }
+          100% { opacity: 0; transform: translate(-50%, -8px); }
+        }
+      `}</style>
+
       <main className="layout">
         <section className="board-panel" aria-label="Rogue board">
           <div className="powers-bar" aria-label="Active powers">

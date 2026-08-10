@@ -23,6 +23,9 @@ const REVEAL_DELAY_MS = 500; // delay before the full board flips over
 const REVEAL_HOLD_MS = 1400; // time to look at the revealed board before the regression note appears
 const MESSAGE_HOLD_MS = 1800; // time to read the regression note before the next level quietly starts
 
+// How long the "You have earned X coins!" toast stays visible.
+const COIN_NOTIF_MS = 3000;
+
 function buildLevel(levelNumber) {
   const pattern = getRandomPatternForLevel(levelNumber);
   return buildGrid(pattern); // { grid, maxScore }
@@ -62,6 +65,11 @@ export default function Classic() {
   const [pendingAction, setPendingAction] = useState(null);
   const resetBtnRef = useRef(null);
 
+  // "You have earned X coins!" toast — only ever shown when a new run is
+  // started and the just-finished run's total score gets banked.
+  const [coinNotification, setCoinNotification] = useState(null);
+  const coinNotifTimeoutRef = useRef(null);
+
   // Tracks every pending setTimeout from the loss sequence so it can be
   // cancelled if the player starts a new run (or the component unmounts)
   // before it finishes playing out.
@@ -72,9 +80,21 @@ export default function Classic() {
     timeoutsRef.current = [];
   }
 
+  function showCoinNotification(amount) {
+    setCoinNotification(amount);
+    if (coinNotifTimeoutRef.current) clearTimeout(coinNotifTimeoutRef.current);
+    coinNotifTimeoutRef.current = setTimeout(() => {
+      setCoinNotification(null);
+      coinNotifTimeoutRef.current = null;
+    }, COIN_NOTIF_MS);
+  }
+
   useEffect(() => {
     startNewLevel(1);
-    return clearPendingTimeouts;
+    return () => {
+      clearPendingTimeouts();
+      if (coinNotifTimeoutRef.current) clearTimeout(coinNotifTimeoutRef.current);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -119,6 +139,7 @@ export default function Classic() {
 
     // Hit a Voltorb — the run ends here. The level score is forfeited
     // (never added to totalScore), and totalScore is left untouched.
+    // Coins are NOT awarded here — only when the player starts a new run.
     // `flipCount` here is whatever it was before this flip, since a
     // Voltorb doesn't increment it — exactly the count the regression
     // rule needs.
@@ -192,6 +213,13 @@ export default function Classic() {
 
   function handleNewRun() {
     clearPendingTimeouts();
+
+    // Bank whatever total score was built up before wiping it out.
+    if (totalScore > 0) {
+      addPokedollars(totalScore);
+      showCoinNotification(totalScore);
+    }
+
     setLevel(1);
     setTotalScore(0);
     setGameOver(false);
@@ -224,6 +252,37 @@ export default function Classic() {
 
   return (
     <div className="free-play-page classic-page">
+      {coinNotification !== null && (
+        <div
+          role="status"
+          style={{
+            position: "fixed",
+            top: "20px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 1000,
+            padding: "10px 18px",
+            borderRadius: "10px",
+            background: "rgba(20, 160, 90, 0.95)",
+            color: "#fff",
+            fontWeight: 600,
+            fontSize: "14px",
+            boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
+            animation: "coin-toast-fade 3s ease forwards",
+          }}
+        >
+          You have earned {coinNotification.toLocaleString()} coins!
+        </div>
+      )}
+      <style>{`
+        @keyframes coin-toast-fade {
+          0% { opacity: 0; transform: translate(-50%, -8px); }
+          10% { opacity: 1; transform: translate(-50%, 0); }
+          85% { opacity: 1; transform: translate(-50%, 0); }
+          100% { opacity: 0; transform: translate(-50%, -8px); }
+        }
+      `}</style>
+
       <main className="layout">
         <section className="board-panel" aria-label="Classic board">
           <div
