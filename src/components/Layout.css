@@ -255,6 +255,10 @@ header {
   border: 0;
 }
 
+.mobile-auth-row {
+  display: none;
+}
+
 @media (max-width: 800px) {
   .content-wrapper {
     padding: 0.2rem 0.75rem 2rem;
@@ -271,5 +275,12 @@ header {
     gap: 12px;
     width: 100%;
     padding: 0.5rem 0;
+  }
+
+  .mobile-auth-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 8px;
   }
 }

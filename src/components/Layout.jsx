@@ -99,7 +99,7 @@ export default function Layout({ children }) {
               </a>
             </div>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '8px' }}>
+          <div className="mobile-auth-row">
               {user ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span className="auth-user-label">{user.user_metadata?.full_name?.split(' ')[0] ?? user.email.split('@')[0]}</span>
