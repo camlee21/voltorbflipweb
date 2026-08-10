@@ -21,7 +21,11 @@ const STAGGER_MS = 90;
 // Timing for the automatic loss sequence.
 const REVEAL_DELAY_MS = 500; // delay before the full board flips over
 const REVEAL_HOLD_MS = 1400; // time to look at the revealed board before the regression note appears
-const MESSAGE_HOLD_MS = 1800; // time to read the regression note before the next level quietly starts
+const MESSAGE_HOLD_MS = 2200; // time to read the regression note before the next level quietly starts
+
+// Timing for the automatic win sequence — gives the player a moment to
+// see "Level beaten!" and the revealed board before the next level loads.
+const WIN_HOLD_MS = 2500;
 
 // How long the "You have earned X coins!" toast stays visible.
 const COIN_NOTIF_MS = 3000;
@@ -34,7 +38,7 @@ function buildLevel(levelNumber) {
 function getMessageTone(msg) {
   if (!msg) return "";
   if (msg.includes("beaten")) return "message--success";
-  if (msg.includes("lost") || msg.includes("unfinished") || msg.includes("pushed back")) return "message--error";
+  if (msg.includes("lost") || msg.includes("pushed back")) return "message--error";
   return "message--neutral";
 }
 
@@ -57,8 +61,9 @@ export default function Classic() {
   const [origin, setOrigin] = useState(null);
   const [revealing, setRevealing] = useState(false);
 
-  // True once a level's been successfully submitted and its board revealed,
-  // until the player explicitly advances — swaps Submit for a Next Level button.
+  // True from the moment all 2s/3s are flipped (score === maxScore) until
+  // the next level has been built. Freezes the board and guards the win
+  // effect against firing more than once for the same level.
   const [awaitingNextLevel, setAwaitingNextLevel] = useState(false);
 
   const [showGameOverPopup, setShowGameOverPopup] = useState(false);
@@ -70,9 +75,9 @@ export default function Classic() {
   const [coinNotification, setCoinNotification] = useState(null);
   const coinNotifTimeoutRef = useRef(null);
 
-  // Tracks every pending setTimeout from the loss sequence so it can be
-  // cancelled if the player starts a new run (or the component unmounts)
-  // before it finishes playing out.
+  // Tracks every pending setTimeout from the loss/win sequences so they can
+  // be cancelled if the player starts a new run (or the component unmounts)
+  // before they finish playing out.
   const timeoutsRef = useRef([]);
 
   function clearPendingTimeouts() {
@@ -109,6 +114,33 @@ export default function Classic() {
     return () => window.removeEventListener("click", handleWindowClick);
   }, [pendingAction]);
 
+  // Fires automatically the instant every 2 and 3 has been flipped
+  // (score === maxScore), replacing the old manual Submit button. Reveals
+  // the board, shows "Level beaten!", then quietly advances after
+  // WIN_HOLD_MS so the player has time to register the win.
+  useEffect(() => {
+    if (grid.length === 0) return;
+    if (gameOver || awaitingNextLevel) return;
+    if (score !== maxScore) return;
+
+    setMessage("Level beaten!");
+    setOrigin(null); // no clicked tile to ripple from — use the diagonal wave
+    setGrid((g) => revealBoard(g));
+    setRevealing(true);
+    setAwaitingNextLevel(true);
+
+    const winTimeout = setTimeout(() => {
+      const nextLevel = level + 1;
+      setTotalScore((t) => t + score);
+      setLevel(nextLevel);
+      startNewLevel(nextLevel);
+      setMessage("");
+    }, WIN_HOLD_MS);
+
+    timeoutsRef.current.push(winTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [score, maxScore, gameOver, awaitingNextLevel, grid.length]);
+
   function startNewLevel(levelNumber) {
     const { grid: newGrid, maxScore: newMax } = buildLevel(levelNumber);
     setGrid(newGrid);
@@ -121,7 +153,7 @@ export default function Classic() {
   }
 
   function handleFlip(row, col) {
-    if (gameOver) return;
+    if (gameOver || awaitingNextLevel) return;
     const tile = grid[row][col];
     if (tile.revealed) return;
 
@@ -183,32 +215,12 @@ export default function Classic() {
   }
 
   function toggleNote(row, col) {
-    if (gameOver) return;
+    if (gameOver || awaitingNextLevel) return;
     const tile = grid[row][col];
     if (tile.revealed) return;
     const newGrid = grid.map((r) => r.map((t) => ({ ...t })));
     newGrid[row][col].noted = !newGrid[row][col].noted;
     setGrid(newGrid);
-  }
-
-  function handleSubmit() {
-    if (score !== maxScore) {
-      setMessage("Game unfinished!");
-      return;
-    }
-    setMessage("Level beaten!");
-    setOrigin(null); // no clicked tile to ripple from — use the diagonal wave
-    setGrid((g) => revealBoard(g));
-    setRevealing(true);
-    setAwaitingNextLevel(true);
-  }
-
-  function handleNextLevel() {
-    const nextLevel = level + 1;
-    setTotalScore((t) => t + score);
-    setLevel(nextLevel);
-    startNewLevel(nextLevel);
-    setMessage("");
   }
 
   function handleNewRun() {
@@ -297,7 +309,7 @@ export default function Classic() {
                     key={tile.id}
                     tile={tile}
                     theme={THEME}
-                    disabled={gameOver}
+                    disabled={gameOver || awaitingNextLevel}
                     onFlip={() => handleFlip(r, c)}
                     onNote={() => toggleNote(r, c)}
                     flipDelay={flipDelayFor(r, c, tile)}
@@ -348,17 +360,6 @@ export default function Classic() {
             >
               New Run
             </button>
-            {!gameOver && (
-              awaitingNextLevel ? (
-                <button type="button" className="btn btn--primary" onClick={handleNextLevel}>
-                  Next Level
-                </button>
-              ) : (
-                <button type="button" className="btn btn--primary" onClick={handleSubmit}>
-                  Submit
-                </button>
-              )
-            )}
           </div>
         </aside>
       </main>

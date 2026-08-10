@@ -43,7 +43,7 @@ const POWERS = {
   },
   Peek: {
     icon: "/sprites/powers/peek.png",
-    desc: "Reveal a tile for a second without flipping it. Stacks — each copy adds two charges.",
+    desc: "Reveal a tile for a second without flipping it. This power stacks, each copy adding two charges.",
   },
   "No Ones": {
     icon: "/sprites/powers/no-ones.png",
@@ -81,7 +81,7 @@ function diagonalStats(grid) {
 function getMessageTone(msg) {
   if (!msg) return "";
   if (msg.includes("beaten") || msg.includes("Protected") || msg.includes("Mega")) return "message--success";
-  if (msg.includes("lost") || msg.includes("unfinished") || msg.includes("reset")) return "message--error";
+  if (msg.includes("lost") || msg.includes("reset")) return "message--error";
   return "message--neutral";
 }
 
@@ -150,7 +150,23 @@ export default function RogueGame() {
     window.addEventListener("click", handleWindowClick);
     return () => window.removeEventListener("click", handleWindowClick);
   }, [pendingAction]);
-  
+
+  // Fires automatically the instant every 2 and 3 has been flipped
+  // (score === maxScore), replacing the old manual Submit button. The
+  // reward popup that follows requires the player to click a choice, which
+  // is what gives them time to register the win before the next level loads
+  // — no extra timer needed here, unlike Classic mode.
+  useEffect(() => {
+    if (grid.length === 0) return;
+    if (gameOver || showRewardPopup) return;
+    if (score !== maxScore) return;
+
+    setMessage("Level beaten!");
+    setRewardChoice(randomPower(currentPowers));
+    setShowRewardPopup(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [score, maxScore, gameOver, showRewardPopup, grid.length]);
+
   function startNewLevel(levelNumber, powers) {
     const { grid: newGrid, maxScore: newMax } = buildLevel(levelNumber);
     let workingGrid = newGrid;
@@ -196,7 +212,7 @@ export default function RogueGame() {
   }
 
   function handleFlip(row, col) {
-    if (gameOver) return;
+    if (gameOver || showRewardPopup) return;
     const tile = grid[row][col];
     if (tile.revealed) return;
 
@@ -282,22 +298,12 @@ export default function RogueGame() {
     }
 
   function toggleNote(row, col) {
-    if (gameOver) return;
+    if (gameOver || showRewardPopup) return;
     const tile = grid[row][col];
     if (tile.revealed) return;
     const newGrid = grid.map((r) => r.map((t) => ({ ...t })));
     newGrid[row][col].noted = !newGrid[row][col].noted;
     setGrid(newGrid);
-  }
-
-  function handleSubmit() {
-    if (score === maxScore) {
-      setMessage("Level beaten!");
-      setRewardChoice(randomPower(currentPowers));
-      setShowRewardPopup(true);
-    } else {
-      setMessage("Game unfinished!");
-    }
   }
 
   function applyLevelUp(updatedPowers) {
@@ -431,7 +437,7 @@ export default function RogueGame() {
                     key={tile.id}
                     tile={tile}
                     theme={THEME}
-                    disabled={gameOver}
+                    disabled={gameOver || showRewardPopup}
                     onFlip={() => handleFlip(r, c)}
                     onNote={() => toggleNote(r, c)}
                     flipDelay={flipDelayFor(c, tile)}
@@ -487,7 +493,7 @@ export default function RogueGame() {
               type="button"
               className={`btn btn--ghost btn--peek ${peekArmed ? "armed-peek" : ""}`}
               onClick={() => setPeekArmed((a) => !a)}
-              disabled={gameOver}
+              disabled={gameOver || showRewardPopup}
             >
               {peekArmed ? "Click a tile to peek…" : `Use Peek (${numPeeks} left)`}
             </button>
@@ -503,9 +509,6 @@ export default function RogueGame() {
               onClick={handleDangerClick}
             >
               New Run
-            </button>
-            <button type="button" className="btn btn--primary" onClick={handleSubmit} disabled={gameOver}>
-              Submit
             </button>
           </div>
         </aside>
