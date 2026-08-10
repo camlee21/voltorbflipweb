@@ -16,6 +16,11 @@ const THEME = "classic";
 const VOLTORB_ICON = "/sprites/counters/voltorb-count-icon.png";
 const STAGGER_MS = 90;
 
+// Timing for the automatic loss sequence.
+const REVEAL_DELAY_MS = 500;   // delay before the full board flips over
+const REVEAL_HOLD_MS = 1400;   // time to look at the revealed board before the regression note appears
+const MESSAGE_HOLD_MS = 1800;  // time to read the regression note before the next level quietly starts
+
 function buildLevel(levelNumber) {
   const pattern = getRandomPatternForLevel(levelNumber);
   return buildGrid(pattern); // { grid, maxScore }
@@ -24,7 +29,7 @@ function buildLevel(levelNumber) {
 function getMessageTone(msg) {
   if (!msg) return "";
   if (msg.includes("beaten")) return "message--success";
-  if (msg.includes("lost") || msg.includes("unfinished")) return "message--error";
+  if (msg.includes("lost") || msg.includes("unfinished") || msg.includes("pushed back")) return "message--error";
   return "message--neutral";
 }
 
@@ -36,6 +41,10 @@ export default function Classic() {
   const [maxScore, setMaxScore] = useState(1);
   const [gameOver, setGameOver] = useState(false);
   const [message, setMessage] = useState("");
+
+  // Number of multiplier cards (including ×1s) successfully flipped during
+  // the current level attempt. Used to compute the level-drop on a loss.
+  const [flipCount, setFlipCount] = useState(0);
 
   // Staggered-reveal state: `origin` is the tile the cascade ripples out from
   // (the clicked Voltorb on a loss, or null for the win reveal's diagonal wave).
@@ -51,8 +60,19 @@ export default function Classic() {
   const [pendingAction, setPendingAction] = useState(null);
   const resetBtnRef = useRef(null);
 
+  // Tracks every pending setTimeout from the loss sequence so it can be
+  // cancelled if the player starts a new run (or the component unmounts)
+  // before it finishes playing out.
+  const timeoutsRef = useRef([]);
+
+  function clearPendingTimeouts() {
+    timeoutsRef.current.forEach(clearTimeout);
+    timeoutsRef.current = [];
+  }
+
   useEffect(() => {
     startNewLevel(1);
+    return clearPendingTimeouts;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -72,6 +92,7 @@ export default function Classic() {
     setGrid(newGrid);
     setMaxScore(newMax);
     setScore(1);
+    setFlipCount(0);
     setOrigin(null);
     setRevealing(false);
     setAwaitingNextLevel(false);
@@ -90,22 +111,52 @@ export default function Classic() {
       newGrid[row][col].noted = false;
       setGrid(newGrid);
       setScore((s) => s * value);
+      setFlipCount((c) => c + 1);
       return;
     }
 
-    // Hit a Voltorb — the run ends here.
+    // Hit a Voltorb — the run ends here. The level score is forfeited
+    // (never added to totalScore), and totalScore is left untouched.
+    // `flipCount` here is whatever it was before this flip, since a
+    // Voltorb doesn't increment it — exactly the count the regression
+    // rule needs.
+    const flipsBeforeLoss = flipCount;
+
     const newGrid = grid.map((r) => r.map((t) => ({ ...t })));
     newGrid[row][col].revealed = true;
     setGrid(newGrid);
     setGameOver(true);
     setMessage("Oops! You lost!");
     setOrigin({ row, col });
-    setTimeout(() => {
+
+    const revealTimeout = setTimeout(() => {
       setGrid(revealBoard(newGrid));
       setRevealing(true);
-      setTotalScore((t) => t + score);
       //   setShowGameOverPopup(true);
-    }, 500);
+
+      const messageTimeout = setTimeout(() => {
+        const nextLevel = flipsBeforeLoss < level ? Math.max(1, flipsBeforeLoss) : level;
+
+        setMessage(
+          nextLevel < level
+            ? `You've been pushed back to level ${nextLevel}!`
+            : `You're still on level ${level}.`
+        );
+
+        const advanceTimeout = setTimeout(() => {
+          setLevel(nextLevel);
+          setGameOver(false);
+          setMessage("");
+          startNewLevel(nextLevel);
+        }, MESSAGE_HOLD_MS);
+
+        timeoutsRef.current.push(advanceTimeout);
+      }, REVEAL_HOLD_MS);
+
+      timeoutsRef.current.push(messageTimeout);
+    }, REVEAL_DELAY_MS);
+
+    timeoutsRef.current.push(revealTimeout);
   }
 
   function toggleNote(row, col) {
@@ -138,6 +189,7 @@ export default function Classic() {
   }
 
   function handleNewRun() {
+    clearPendingTimeouts();
     setLevel(1);
     setTotalScore(0);
     setGameOver(false);
@@ -172,7 +224,11 @@ export default function Classic() {
     <div className="free-play-page classic-page">
       <main className="layout">
         <section className="board-panel" aria-label="Classic board">
-          <div className="board" style={{ "--tile-size": "clamp(40px, 12vw, 80px)" }} onContextMenu={suppressBoardContextMenu}>
+          <div
+            className="board"
+            style={{ "--tile-size": "clamp(40px, 12vw, 80px)" }}
+            onContextMenu={suppressBoardContextMenu}
+          >
             {grid.map((row, r) => (
               <div key={r} style={{ display: "contents" }}>
                 {row.map((tile, c) => (
@@ -231,14 +287,16 @@ export default function Classic() {
             >
               New Run
             </button>
-            {awaitingNextLevel ? (
-              <button type="button" className="btn btn--primary" onClick={handleNextLevel}>
-                Next Level
-              </button>
-            ) : (
-              <button type="button" className="btn btn--primary" onClick={handleSubmit} disabled={gameOver}>
-                Submit
-              </button>
+            {!gameOver && (
+              awaitingNextLevel ? (
+                <button type="button" className="btn btn--primary" onClick={handleNextLevel}>
+                  Next Level
+                </button>
+              ) : (
+                <button type="button" className="btn btn--primary" onClick={handleSubmit}>
+                  Submit
+                </button>
+              )
             )}
           </div>
         </aside>
