@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Footer from './Footer'
+import PokedollarCounter from './PokedollarCounter'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import './Layout.css'
@@ -30,6 +31,7 @@ export default function Layout({ children }) {
 
           <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 1 }}>
             <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '10px' }}>
+              <PokedollarCounter />
               <a href="https://whosthattrainer.app" target="_blank" rel="noopener noreferrer" title="Who's That Trainer?"
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(8px)', transition: 'background 0.2s, transform 0.15s', flexShrink: 0 }}
                 onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.16)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
@@ -69,6 +71,7 @@ export default function Layout({ children }) {
             </div>
 
             <div className="header-mobile__actions">
+              <PokedollarCounter compact />
               <a href="https://whosthattrainer.app" target="_blank" rel="noopener noreferrer" title="Who's That Trainer?" className="icon-btn">
                 <img src="wtt-icon.svg" alt="Who's That Trainer?" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
               </a>

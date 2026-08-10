@@ -12,14 +12,16 @@ import {
 import "./FreePlayGame.css"; // shares the board/tile/panel look with Free Play
 import "./Classic.css";
 
+import { addPokedollars } from "../utils/pokedollars";
+
 const THEME = "classic";
 const VOLTORB_ICON = "/sprites/counters/voltorb-count-icon.png";
 const STAGGER_MS = 90;
 
 // Timing for the automatic loss sequence.
-const REVEAL_DELAY_MS = 500;   // delay before the full board flips over
-const REVEAL_HOLD_MS = 1400;   // time to look at the revealed board before the regression note appears
-const MESSAGE_HOLD_MS = 1800;  // time to read the regression note before the next level quietly starts
+const REVEAL_DELAY_MS = 500; // delay before the full board flips over
+const REVEAL_HOLD_MS = 1400; // time to look at the revealed board before the regression note appears
+const MESSAGE_HOLD_MS = 1800; // time to read the regression note before the next level quietly starts
 
 function buildLevel(levelNumber) {
   const pattern = getRandomPatternForLevel(levelNumber);
