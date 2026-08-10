@@ -31,7 +31,7 @@ export default function PokedollarCounter({ compact = false }) {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    height: "40px",
+    height: compact ? "34px" : "40px",
     padding: compact ? "0 10px" : "0 14px",
     borderRadius: "10px",
     border: "1px solid rgba(255,255,255,0.15)",
@@ -46,7 +46,7 @@ export default function PokedollarCounter({ compact = false }) {
 
   const textStyle = {
     fontWeight: 600,
-    fontSize: compact ? "13px" : "14px",
+    fontSize: compact ? "12px" : "14px",
     lineHeight: 1,
   };
 

@@ -98,7 +98,8 @@ export default function Layout({ children }) {
                 <img src="https://storage.ko-fi.com/cdn/cup-border.png" alt="Ko-fi cup" style={{ height: '16px', width: '16px', objectFit: 'contain', display: 'block' }} />
               </a>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '8px' }}>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '8px' }}>
               {user ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span className="auth-user-label">{user.user_metadata?.full_name?.split(' ')[0] ?? user.email.split('@')[0]}</span>
@@ -108,7 +109,6 @@ export default function Layout({ children }) {
                 <button onClick={() => setModalOpen(true)} className="auth-btn accent">Log In</button>
               )}
             </div>
-          </div>
         </header>
 
         {children}
