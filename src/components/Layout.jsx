@@ -2,11 +2,14 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Footer from './Footer'
 import PokedollarCounter from './PokedollarCounter'
+import AuthModal from './AuthModal'
+import { useAuthContext } from '../contexts/AuthContext'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import './Layout.css'
 
 export default function Layout({ children }) {
+  const { user, signOut } = useAuthContext()
   const [modalOpen, setModalOpen] = useState(false)
 
   return (
@@ -21,15 +24,15 @@ export default function Layout({ children }) {
           {/* Desktop layout: banner spans both rows, buttons stacked on the right */}
           <div className="header-desktop">
 
-          <div className="site-banner">
+          <Link to="/" className="site-banner" style={{ textDecoration: 'none' }}>
             <img src="/sprites/banner_icon.png" alt="" className="site-banner__icon" />
             <div className="site-banner__titles">
               <span className="site-banner__title">VOLTORB FLIP</span>
               <span className="site-banner__subtitle">By Draglash</span>
             </div>
-          </div>
+          </Link>
 
-          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1, marginTop: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '10px' }}>
               <PokedollarCounter />
               <a href="https://whosthattrainer.app" target="_blank" rel="noopener noreferrer" title="Who's That Trainer?"
@@ -57,18 +60,29 @@ export default function Layout({ children }) {
                 <span>Support me on Ko-fi</span>
               </a>
             </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '44px', marginTop: '12px' }}>
+              {user ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="auth-user-label">{user.user_metadata?.full_name?.split(' ')[0] ?? user.email.split('@')[0]}</span>
+                  <button onClick={signOut} className="auth-btn">Sign Out</button>
+                </div>
+              ) : (
+                <button onClick={() => setModalOpen(true)} className="auth-btn accent">Log In</button>
+              )}
+            </div>
           </div>
         </div>
 
           {/* Mobile layout: single compact row so the board keeps most of the screen */}
           <div className="header-mobile">
-            <div className="site-banner site-banner--mobile">
+            <Link to="/" className="site-banner site-banner--mobile" style={{ textDecoration: 'none' }}>
               <img src="/sprites/banner_icon.png" alt="" className="site-banner__icon" />
               <div className="site-banner__titles">
                 <span className="site-banner__title">VOLTORB FLIP</span>
                 <span className="site-banner__subtitle">By Draglash</span>
               </div>
-            </div>
+            </Link>
 
             <div className="header-mobile__actions">
               <PokedollarCounter compact />
@@ -83,6 +97,16 @@ export default function Layout({ children }) {
               <a href="https://ko-fi.com/I8P7210YG4" target="_blank" rel="noopener noreferrer" title="Support me on Ko-fi" className="icon-btn kofi-btn--icon-only">
                 <img src="https://storage.ko-fi.com/cdn/cup-border.png" alt="Ko-fi cup" style={{ height: '16px', width: '16px', objectFit: 'contain', display: 'block' }} />
               </a>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '8px' }}>
+              {user ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="auth-user-label">{user.user_metadata?.full_name?.split(' ')[0] ?? user.email.split('@')[0]}</span>
+                  <button onClick={signOut} className="auth-btn">Sign Out</button>
+                </div>
+              ) : (
+                <button onClick={() => setModalOpen(true)} className="auth-btn accent">Log In</button>
+              )}
             </div>
           </div>
         </header>

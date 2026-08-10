@@ -12,7 +12,8 @@ import {
   revealBoard,
 } from "../game/gameLogic";
 
-import { addPokedollars } from "../utils/pokedollars";
+import { useAuthContext } from "../contexts/AuthContext";
+import { useWalletContext } from "../contexts/WalletContext";
 
 import "./FreePlayGame.css";
 import "./RogueGame.css";
@@ -86,6 +87,8 @@ function getMessageTone(msg) {
 }
 
 export default function RogueGame() {
+  const { user } = useAuthContext();
+  const { addCoins } = useWalletContext();
   const [level, setLevel] = useState(1);
   const [score, setScore] = useState(1);
   const [totalScore, setTotalScore] = useState(0);
@@ -290,8 +293,8 @@ export default function RogueGame() {
 
         // Losing a run banks the final total score as coins.
         if (finalTotal > 0) {
-          addPokedollars(finalTotal);
-          showCoinNotification(finalTotal);
+          if (user) addCoins(finalTotal);
+          if (user) showCoinNotification(finalTotal);
         }
         // setShowGameOverPopup(true);
     }, 500);

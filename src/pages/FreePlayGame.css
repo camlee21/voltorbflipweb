@@ -1,11 +1,10 @@
 .free-play-page {
-  min-height: 100vh;
   width: 100%;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 48px 0 64px;
+  padding: 24px 24px 0; /* drop the bottom padding too, or shrink it */
   gap: 32px;
 }
 

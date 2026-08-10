@@ -12,7 +12,8 @@ import {
 import "./FreePlayGame.css"; // shares the board/tile/panel look with Free Play
 import "./Classic.css";
 
-import { addPokedollars } from "../utils/pokedollars";
+import { useAuthContext } from "../contexts/AuthContext";
+import { useWalletContext } from "../contexts/WalletContext";
 
 const THEME = "classic";
 const VOLTORB_ICON = "/sprites/counters/voltorb-count-icon.png";
@@ -43,6 +44,9 @@ function getMessageTone(msg) {
 }
 
 export default function Classic() {
+  const { user } = useAuthContext();
+  const { addCoins } = useWalletContext();
+
   const [level, setLevel] = useState(1);
   const [score, setScore] = useState(1);
   const [totalScore, setTotalScore] = useState(0);
@@ -228,8 +232,8 @@ export default function Classic() {
 
     // Bank whatever total score was built up before wiping it out.
     if (totalScore > 0) {
-      addPokedollars(totalScore);
-      showCoinNotification(totalScore);
+      if (user) addCoins(totalScore);
+      if (user) showCoinNotification(totalScore);
     }
 
     setLevel(1);
