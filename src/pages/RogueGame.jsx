@@ -469,7 +469,7 @@ export default function RogueGame() {
           </div>
 
           <p className="hint">
-            Right-click a tile to note it.
+            Right-click (or long-press on mobile) a tile to note it.
             {currentPowers.includes("Peek") && " Click Peek below, then a tile, to look without flipping."}
           </p>
         </section>

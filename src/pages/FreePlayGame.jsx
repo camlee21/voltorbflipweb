@@ -216,7 +216,7 @@ export default function FreePlayGame() {
             <div />
           </div>
 
-          <p className="hint">Right-click a tile to note it.</p>
+          <p className="hint">Right-click (or long-press on mobile) a tile to note it.</p>
         </section>
 
         <aside className="sidebar">
