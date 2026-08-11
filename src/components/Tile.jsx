@@ -1,11 +1,21 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./Tile.css";
 
 const LONG_PRESS_MS = 300;
 const MOVE_THRESHOLD_PX = 10;
 
 export default function Tile({ tile, theme, onFlip, onNote, disabled, flipDelay = 0 }) {
-  const frontSrc = `/sprites/${tile.value}_${theme}.png`;
+  // Only update the value shown on the front face at the moment a tile
+  // actually flips face-up
+  const [displayedValue, setDisplayedValue] = useState(tile.value);
+
+  useEffect(() => {
+    if (tile.revealed) {
+      setDisplayedValue(tile.value);
+    }
+  }, [tile.revealed, tile.value]);
+
+  const frontSrc = `/sprites/${displayedValue}_${theme}.png`;
   const backSrc = tile.noted
     ? `/sprites/NotedTile_${theme}.png`
     : `/sprites/UnknownTile_${theme}.png`;
