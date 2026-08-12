@@ -3,7 +3,7 @@
 // "UnknownTile_blastoise.png"), and is also what gets stored in the
 // Supabase `profiles.themes` array and the equipped-theme localStorage key.
 //
-// bgColor/accentColor are placeholders — swap in your actual palette
+// bgColour/accentColour are placeholders — swap in your actual palette
 // whenever you wire these into the game's real background/accent CSS.
 export const DEFAULT_THEME_PRICE = 1000;
 
@@ -15,13 +15,13 @@ export const THEMES = [
     bgColour: "#1b1f2a",
     accentColour: "#2c7644",
   },
-  { id: "blastoise", label: "Blastoise", price: DEFAULT_THEME_PRICE, bgColour: "#173247", accentColour: "#3ea6d8" },
-  { id: "charizard", label: "Charizard", price: DEFAULT_THEME_PRICE, bgColour: "#401b12", accentColour: "#ff7a3d" },
-  { id: "metagross", label: "Metagross", price: DEFAULT_THEME_PRICE, bgColour: "#292d33", accentColour: "#7fa0c9" },
-  { id: "pikachu", label: "Pikachu", price: DEFAULT_THEME_PRICE, bgColour: "#3d3208", accentColour: "#ffd93d" },
-  { id: "reshiram", label: "Reshiram", price: DEFAULT_THEME_PRICE, bgColour: "#232b32", accentColour: "#8fd3ff" },
-  { id: "sylveon", label: "Sylveon", price: DEFAULT_THEME_PRICE, bgColour: "#3d2130", accentColour: "#f7b6c2" },
   { id: "venusaur", label: "Venusaur", price: DEFAULT_THEME_PRICE, bgColour: "#12291a", accentColour: "#4caf50" },
+  { id: "charizard", label: "Charizard", price: DEFAULT_THEME_PRICE, bgColour: "#401b12", accentColour: "#ff7a3d" },
+  { id: "blastoise", label: "Blastoise", price: DEFAULT_THEME_PRICE, bgColour: "#173247", accentColour: "#3ea6d8" },
+  { id: "pikachu", label: "Pikachu", price: DEFAULT_THEME_PRICE, bgColour: "#3d3208", accentColour: "#ffd93d" },
+  { id: "sylveon", label: "Sylveon", price: DEFAULT_THEME_PRICE, bgColour: "#3d2130", accentColour: "#f7b6c2" },
+  { id: "metagross", label: "Metagross", price: DEFAULT_THEME_PRICE, bgColour: "#292d33", accentColour: "#7fa0c9" },
+  { id: "reshiram", label: "Reshiram", price: DEFAULT_THEME_PRICE, bgColour: "#232b32", accentColour: "#8fd3ff" },
   { id: "zekrom", label: "Zekrom", price: DEFAULT_THEME_PRICE, bgColour: "#16161c", accentColour: "#5dc9f7" },
 ];
 
