@@ -34,8 +34,6 @@ export function useWallet(user) {
     fetchWallet();
   }, [fetchWallet]);
 
-  // Stay in sync if the row changes from another tab, device, or a future
-  // admin/purchase action that updates it server-side.
   useEffect(() => {
     if (!user) return;
     const channel = supabase
@@ -58,7 +56,6 @@ export function useWallet(user) {
     };
   }, [user]);
 
-  // No-ops when signed out — coins are only ever tracked while logged in.
   const addCoins = useCallback(
     async (amount) => {
       if (!user || !amount || amount <= 0) return;
@@ -70,5 +67,36 @@ export function useWallet(user) {
     [user]
   );
 
-  return { ...wallet, loading, addCoins, refreshWallet: fetchWallet };
+  // Buys a theme via the server-side RPC (see SQL: purchase_theme). Returns
+  // { error: null } on success, or { error: "insufficient-coins" | string }
+  // on failure — the caller decides how to surface that.
+  const purchaseTheme = useCallback(
+    async (themeId, price) => {
+      if (!user) return { error: "not-signed-in" };
+      const { data, error } = await supabase.rpc("purchase_theme", {
+        theme_key: themeId,
+        price,
+      });
+
+      if (error) {
+        const message = error.message?.includes("Insufficient")
+          ? "insufficient-coins"
+          : error.message;
+        return { error: message };
+      }
+
+      const row = Array.isArray(data) ? data[0] : data;
+      if (row) {
+        setWallet((w) => ({
+          ...w,
+          coins: row.coins ?? w.coins,
+          themes: row.themes ?? w.themes,
+        }));
+      }
+      return { error: null };
+    },
+    [user]
+  );
+
+  return { ...wallet, loading, addCoins, purchaseTheme, refreshWallet: fetchWallet };
 }

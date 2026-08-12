@@ -14,11 +14,12 @@ import {
 
 import { useAuthContext } from "../contexts/AuthContext";
 import { useWalletContext } from "../contexts/WalletContext";
+import { useEquippedTheme } from "../utils/useEquippedTheme";
+import { getTheme } from "../game/themes";
 
 import "./FreePlayGame.css";
 import "./RogueGame.css";
 
-const THEME = "classic";
 const VOLTORB_ICON = "/sprites/counters/voltorb-count-icon.png";
 const STAGGER_MS = 90;
 
@@ -89,6 +90,12 @@ function getMessageTone(msg) {
 export default function RogueGame() {
   const { user } = useAuthContext();
   const { addCoins } = useWalletContext();
+
+  // The player's currently-equipped board theme (defaults to "classic").
+  // Tile sprite paths (`/sprites/${value}_${theme}.png`) key off this.
+  const [equippedTheme] = useEquippedTheme();
+  const themeColours = getTheme(equippedTheme);
+
   const [level, setLevel] = useState(1);
   const [score, setScore] = useState(1);
   const [totalScore, setTotalScore] = useState(0);
@@ -372,7 +379,10 @@ export default function RogueGame() {
   }
 
   return (
-    <div className="free-play-page rogue-page">
+    <div
+      className="free-play-page rogue-page"
+      style={{ "--theme-bg": themeColours.bgColour, "--theme-accent": themeColours.accentColour }}
+    >
       {coinNotification !== null && (
         <div
           role="status"
@@ -439,7 +449,7 @@ export default function RogueGame() {
                   <Tile
                     key={tile.id}
                     tile={tile}
-                    theme={THEME}
+                    theme={equippedTheme}
                     disabled={gameOver || showRewardPopup}
                     onFlip={() => handleFlip(r, c)}
                     onNote={() => toggleNote(r, c)}

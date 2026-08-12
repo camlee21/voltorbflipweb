@@ -14,8 +14,9 @@ import "./Classic.css";
 
 import { useAuthContext } from "../contexts/AuthContext";
 import { useWalletContext } from "../contexts/WalletContext";
+import { useEquippedTheme } from "../utils/useEquippedTheme";
+import { getTheme } from "../game/themes";
 
-const THEME = "classic";
 const VOLTORB_ICON = "/sprites/counters/voltorb-count-icon.png";
 const STAGGER_MS = 90;
 
@@ -46,6 +47,11 @@ function getMessageTone(msg) {
 export default function Classic() {
   const { user } = useAuthContext();
   const { addCoins } = useWalletContext();
+
+  // The player's currently-equipped board theme (defaults to "classic").
+  // Tile sprite paths (`/sprites/${value}_${theme}.png`) key off this.
+  const [equippedTheme] = useEquippedTheme();
+  const themeColours = getTheme(equippedTheme);
 
   const [level, setLevel] = useState(1);
   const [score, setScore] = useState(1);
@@ -267,7 +273,10 @@ export default function Classic() {
   }
 
   return (
-    <div className="free-play-page classic-page">
+    <div
+      className="free-play-page classic-page"
+      style={{ "--theme-bg": themeColours.bgColour, "--theme-accent": themeColours.accentColour }}
+    >
       {coinNotification !== null && (
         <div
           role="status"
@@ -312,7 +321,7 @@ export default function Classic() {
                   <Tile
                     key={tile.id}
                     tile={tile}
-                    theme={THEME}
+                    theme={equippedTheme}
                     disabled={gameOver || awaitingNextLevel}
                     onFlip={() => handleFlip(r, c)}
                     onNote={() => toggleNote(r, c)}
