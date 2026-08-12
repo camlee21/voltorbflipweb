@@ -52,8 +52,8 @@ export default function Shop() {
       <h1 className="shop-title">Shop</h1>
       <p className="shop-subtitle">
         {user
-          ? "Spend your Pokedollars on new themes!"
-          : "Log in to purchase and equip themes with your Pokedollars!"}
+          ? "Spend your Coins on new themes!"
+          : "Log in to purchase and equip themes with your Coins!"}
       </p>
 
       <div className="shop-grid">
