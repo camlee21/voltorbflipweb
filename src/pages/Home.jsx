@@ -35,9 +35,15 @@ export default function Home() {
         </div>
       </div>
 
-      {mode === "classic" && <Classic />}
-      {mode === "freeplay" && <FreePlayGame />}
-      {mode === "rogue" && <RogueGame />}
+      <div style={{ display: mode === "classic" ? "block" : "none" }}>
+        <Classic />
+      </div>
+      <div style={{ display: mode === "freeplay" ? "block" : "none" }}>
+        <FreePlayGame />
+      </div>
+      <div style={{ display: mode === "rogue" ? "block" : "none" }}>
+        <RogueGame />
+      </div>
     </>
   );
 }

@@ -52,7 +52,7 @@ export default function Shop() {
       <h1 className="shop-title">Shop</h1>
       <p className="shop-subtitle">
         {user
-          ? "Spend your Pokedollars on new themes for the board."
+          ? "Spend your Pokedollars on new themes!"
           : "Log in to purchase and equip themes with your Pokedollars!"}
       </p>
 
