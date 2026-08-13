@@ -4,6 +4,7 @@ import Footer from './Footer'
 import PokedollarCounter from './PokedollarCounter'
 import AuthModal from './AuthModal'
 import { useAuthContext } from '../contexts/AuthContext'
+import { useApplyTheme } from '../utils/useAppliedTheme'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import './Layout.css'
@@ -11,6 +12,8 @@ import './Layout.css'
 export default function Layout({ children }) {
   const { user, signOut } = useAuthContext()
   const [modalOpen, setModalOpen] = useState(false)
+
+  useApplyTheme()
 
   return (
     <div className="app-root">

@@ -13,7 +13,6 @@ import {
 } from "../game/gameLogic";
 
 import { useEquippedTheme } from "../utils/useEquippedTheme";
-import { getTheme } from "../game/themes";
 
 import "./FreePlayGame.css";
 
@@ -34,7 +33,6 @@ export default function FreePlayGame() {
   // The player's currently-equipped board theme (defaults to "classic").
   // Tile sprite paths (`/sprites/${value}_${theme}.png`) key off this.
   const [equippedTheme] = useEquippedTheme();
-  const themeColours = getTheme(equippedTheme);
 
   const [level, setLevel] = useState(1);
   const [score, setScore] = useState(1);
@@ -191,14 +189,7 @@ export default function FreePlayGame() {
   }
 
   return (
-    <div
-      className="free-play-page"
-      style={{
-        "--bg-image": `url(${BACKGROUND_IMAGE})`,
-        "--theme-bg": themeColours.bgColour,
-        "--theme-accent": themeColours.accentColour,
-      }}
-    >
+    <div className="free-play-page" style={{ "--bg-image": `url(${BACKGROUND_IMAGE})` }}>
 
       <main className="layout">
         <section className="board-panel" aria-label="Game board">

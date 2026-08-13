@@ -15,7 +15,6 @@ import {
 import { useAuthContext } from "../contexts/AuthContext";
 import { useWalletContext } from "../contexts/WalletContext";
 import { useEquippedTheme } from "../utils/useEquippedTheme";
-import { getTheme } from "../game/themes";
 
 import "./FreePlayGame.css";
 import "./RogueGame.css";
@@ -94,7 +93,6 @@ export default function RogueGame() {
   // The player's currently-equipped board theme (defaults to "classic").
   // Tile sprite paths (`/sprites/${value}_${theme}.png`) key off this.
   const [equippedTheme] = useEquippedTheme();
-  const themeColours = getTheme(equippedTheme);
 
   const [level, setLevel] = useState(1);
   const [score, setScore] = useState(1);
@@ -379,10 +377,7 @@ export default function RogueGame() {
   }
 
   return (
-    <div
-      className="free-play-page rogue-page"
-      style={{ "--theme-bg": themeColours.bgColour, "--theme-accent": themeColours.accentColour }}
-    >
+    <div className="free-play-page rogue-page">
       {coinNotification !== null && (
         <div
           role="status"
