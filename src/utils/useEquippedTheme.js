@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
-import { getEquippedTheme, setEquippedTheme, EQUIPPED_THEME_EVENT } from "./equippedTheme";
+import { useAuthContext } from "../contexts/AuthContext";
+import { getEquippedTheme, setEquippedTheme, EQUIPPED_THEME_EVENT, DEFAULT_THEME } from "./equippedTheme";
 
-// Live-reads the equipped theme and re-renders whenever it changes, whether
-// from this tab (custom event) or another tab/window (native "storage").
 export function useEquippedTheme() {
-  const [theme, setTheme] = useState(getEquippedTheme);
+  const { user } = useAuthContext();
+  const [storedTheme, setStoredTheme] = useState(getEquippedTheme);
 
   useEffect(() => {
     function handleLocalChange(e) {
-      setTheme(e.detail);
+      setStoredTheme(e.detail);
     }
     function handleStorageEvent() {
-      setTheme(getEquippedTheme());
+      setStoredTheme(getEquippedTheme());
     }
     window.addEventListener(EQUIPPED_THEME_EVENT, handleLocalChange);
     window.addEventListener("storage", handleStorageEvent);
@@ -24,6 +24,8 @@ export function useEquippedTheme() {
   function equip(themeId) {
     setEquippedTheme(themeId);
   }
+
+  const theme = user ? storedTheme : DEFAULT_THEME;
 
   return [theme, equip];
 }
