@@ -20,7 +20,7 @@ export const THEMES = [
   { id: "pikachu", label: "Pikachu", price: 1500, bgColour: "#3d3208", accentColour: "#ffd93d" },
   { id: "sylveon", label: "Sylveon", price: 1500, bgColour: "#3d2130", accentColour: "#f7b6c2" },
   { id: "metagross", label: "Metagross", price: 3000, bgColour: "#292d33", accentColour: "#7fa0c9" },
-  { id: "reshiram", label: "Reshiram", price: 5000, bgColour: "#232b32", accentColour: "#8fd3ff" },
+  { id: "reshiram", label: "Reshiram", price: 5000, bgColour: "#232b32", accentColour: "#f5493d" },
   { id: "zekrom", label: "Zekrom", price: 5000, bgColour: "#16161c", accentColour: "#5dc9f7" },
 ];
 
