@@ -6,10 +6,12 @@ import HowToPlay from './pages/HowToPlay'
 import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from './contexts/AuthContext'
 import { WalletProvider } from './contexts/WalletContext'
+import ScrollToTop from "./components/ScrollToTop";
 
 export default function App() {
   return (
     <AuthProvider>
+      <ScrollToTop />
       <WalletProvider>
         <Layout>
             <Routes>
