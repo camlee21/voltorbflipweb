@@ -19,16 +19,15 @@ import { useEquippedTheme } from "../utils/useEquippedTheme";
 const VOLTORB_ICON = "/sprites/counters/voltorb-count-icon.png";
 const STAGGER_MS = 90;
 
-// Timing for the automatic loss sequence.
-const REVEAL_DELAY_MS = 500; // delay before the full board flips over
-const REVEAL_HOLD_MS = 1400; // time to look at the revealed board before the regression note appears
-const MESSAGE_HOLD_MS = 2200; // time to read the regression note before the next level quietly starts
+// Timing for the automatic loss sequence
+const REVEAL_DELAY_MS = 500;
+const REVEAL_HOLD_MS = 1400;
+const MESSAGE_HOLD_MS = 2200;
 
-// Timing for the automatic win sequence — gives the player a moment to
-// see "Level beaten!" and the revealed board before the next level loads.
+// Timing for the automatic win sequence
 const WIN_HOLD_MS = 2500;
 
-// How long the "You have earned X coins!" toast stays visible.
+// How long the "You have earned X coins!" toast stays visible
 const COIN_NOTIF_MS = 3000;
 
 function buildLevel(levelNumber) {
@@ -47,8 +46,6 @@ export default function Classic() {
   const { user } = useAuthContext();
   const { addCoins } = useWalletContext();
 
-  // The player's currently-equipped board theme (defaults to "classic").
-  // Tile sprite paths (`/sprites/${value}_${theme}.png`) key off this.
   const [equippedTheme] = useEquippedTheme();
 
   const [level, setLevel] = useState(1);
@@ -59,33 +56,20 @@ export default function Classic() {
   const [gameOver, setGameOver] = useState(false);
   const [message, setMessage] = useState("");
 
-  // Number of multiplier cards (including ×1s) successfully flipped during
-  // the current level attempt. Used to compute the level-drop on a loss.
   const [flipCount, setFlipCount] = useState(0);
 
-  // Staggered-reveal state: `origin` is the tile the cascade ripples out from
-  // (the clicked Voltorb on a loss, or null for the win reveal's diagonal wave).
-  // `revealing` gates the stagger so a normal single-tile flip stays instant.
   const [origin, setOrigin] = useState(null);
   const [revealing, setRevealing] = useState(false);
 
-  // True from the moment all 2s/3s are flipped (score === maxScore) until
-  // the next level has been built. Freezes the board and guards the win
-  // effect against firing more than once for the same level.
   const [awaitingNextLevel, setAwaitingNextLevel] = useState(false);
 
   const [showGameOverPopup, setShowGameOverPopup] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
   const resetBtnRef = useRef(null);
 
-  // "You have earned X coins!" toast — only ever shown when a new run is
-  // started and the just-finished run's total score gets banked.
   const [coinNotification, setCoinNotification] = useState(null);
   const coinNotifTimeoutRef = useRef(null);
 
-  // Tracks every pending setTimeout from the loss/win sequences so they can
-  // be cancelled if the player starts a new run (or the component unmounts)
-  // before they finish playing out.
   const timeoutsRef = useRef([]);
 
   function clearPendingTimeouts() {
@@ -122,10 +106,7 @@ export default function Classic() {
     return () => window.removeEventListener("click", handleWindowClick);
   }, [pendingAction]);
 
-  // Fires automatically the instant every 2 and 3 has been flipped
-  // (score === maxScore), replacing the old manual Submit button. Reveals
-  // the board, shows "Level beaten!", then quietly advances after
-  // WIN_HOLD_MS so the player has time to register the win.
+
   useEffect(() => {
     if (grid.length === 0) return;
     if (gameOver || awaitingNextLevel) return;
@@ -176,13 +157,7 @@ export default function Classic() {
       setFlipCount((c) => c + 1);
       return;
     }
-
-    // Hit a Voltorb — the run ends here. The level score is forfeited
-    // (never added to totalScore), and totalScore is left untouched.
-    // Coins are NOT awarded here — only when the player starts a new run.
-    // `flipCount` here is whatever it was before this flip, since a
-    // Voltorb doesn't increment it — exactly the count the regression
-    // rule needs.
+    
     const flipsBeforeLoss = flipCount;
 
     const newGrid = grid.map((r) => r.map((t) => ({ ...t })));

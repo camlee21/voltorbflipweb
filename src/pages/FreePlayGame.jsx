@@ -30,14 +30,14 @@ function getMessageTone(msg) {
 }
 
 export default function FreePlayGame() {
-  // The player's currently-equipped board theme (defaults to "classic").
-  // Tile sprite paths (`/sprites/${value}_${theme}.png`) key off this.
+  // The player's currently-equipped board theme (defaults to "classic")
+  // Tile sprite paths (`/sprites/${value}_${theme}.png`) key off this
   const [equippedTheme] = useEquippedTheme();
 
   const [level, setLevel] = useState(1);
   const [score, setScore] = useState(1);
   const [gameOver, setGameOver] = useState(false);
-  const [newGame, setNewGame] = useState(true); // mirrors Swift's `newGame` — false once a level's been submitted, until a fresh board starts
+  const [newGame, setNewGame] = useState(true);
   const [grid, setGrid] = useState([]);
   const [maxScore, setMaxScore] = useState(1);
   const [message, setMessage] = useState("");
@@ -46,9 +46,7 @@ export default function FreePlayGame() {
   // Gates the column-stagger animation so a normal single-tile flip stays instant.
   const [revealing, setRevealing] = useState(false);
 
-  // Guards against the level-change effect firing on first mount (we already
-  // build the initial board separately) and against acting on a stale level
-  // during the auto-reset timers after a loss.
+  // Guards against the level-change effect firing on first mount
   const isFirstRender = useRef(true);
   const resetBtnRef = useRef(null);
   const revealBtnRef = useRef(null);
