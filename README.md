@@ -1,16 +1,19 @@
-# React + Vite
+# Voltorb Flip by Draglash Games
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the repo for a web port of Voltorb Flip, the minigame found in the Game Corner of Pokemon HeartGold and SoulSilver! Here are the game modes:
 
-Currently, two official plugins are available:
+## Classic mode
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Classic mode is a recreation of the minigame in HG/SS! Start at Level 1 and try to get to Level 8 by clearing the board.
 
-## React Compiler
+## Free Play mode
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+In Free Play mode, you can pick whatever level you'd like! Use this mode for practice, but remember you cannot earn Coins from it.
 
-## Expanding the ESLint configuration
+## Rogue mode
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Togue mode is an experimental mode created by me, where beating each level can get you power-ups! These powers can either get you more Coins or make the board easier to clear.
+
+# Support
+
+If you have any bug reports, issues or suggestions, please contact me through my Twitter (@drag1ash). Hope you enjoy the website!
