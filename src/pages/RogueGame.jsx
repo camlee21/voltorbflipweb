@@ -94,6 +94,11 @@ export default function RogueGame() {
   // Tile sprite paths (`/sprites/${value}_${theme}.png`) key off this.
   const [equippedTheme] = useEquippedTheme();
 
+  // Mobile-only: when on, tapping a tile notes it instead of flipping it
+  // (and takes priority over an armed Peek — see note in handleTileFlip).
+  // Long-press-to-note (see Tile.jsx) still works independently either way.
+  const [noteMode, setNoteMode] = useState(false);
+
   const [level, setLevel] = useState(1);
   const [score, setScore] = useState(1);
   const [totalScore, setTotalScore] = useState(0);
@@ -314,6 +319,14 @@ export default function RogueGame() {
     setGrid(newGrid);
   }
 
+  function handleTileFlip(row, col) {
+    if (noteMode) {
+      toggleNote(row, col);
+      return;
+    }
+    handleFlip(row, col);
+  }
+
   function applyLevelUp(updatedPowers) {
     setShowRewardPopup(false);
     const nextLevel = level + 1;
@@ -446,7 +459,7 @@ export default function RogueGame() {
                     tile={tile}
                     theme={equippedTheme}
                     disabled={gameOver || showRewardPopup}
-                    onFlip={() => handleFlip(r, c)}
+                    onFlip={() => handleTileFlip(r, c)}
                     onNote={() => toggleNote(r, c)}
                     flipDelay={flipDelayFor(c, tile)}
                   />
@@ -477,6 +490,20 @@ export default function RogueGame() {
             Right-click (or long-press on mobile) a tile to note it.
             {currentPowers.includes("Peek") && " Click Peek below, then a tile, to look without flipping."}
           </p>
+
+          <div className="note-toggle">
+            <span className="note-toggle__label">Note Mode</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={noteMode}
+              aria-label="Toggle note mode"
+              className={`note-toggle__switch ${noteMode ? "is-on" : ""}`}
+              onClick={() => setNoteMode((v) => !v)}
+            >
+              <span className="note-toggle__knob" />
+            </button>
+          </div>
         </section>
 
         <aside className="sidebar">

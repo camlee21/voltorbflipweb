@@ -48,6 +48,10 @@ export default function Classic() {
 
   const [equippedTheme] = useEquippedTheme();
 
+  // Mobile-only: when on, tapping a tile notes it instead of flipping it.
+  // Long-press-to-note (see Tile.jsx) still works independently either way.
+  const [noteMode, setNoteMode] = useState(false);
+
   const [level, setLevel] = useState(1);
   const [score, setScore] = useState(1);
   const [totalScore, setTotalScore] = useState(0);
@@ -206,6 +210,14 @@ export default function Classic() {
     setGrid(newGrid);
   }
 
+  function handleTileFlip(row, col) {
+    if (noteMode) {
+      toggleNote(row, col);
+      return;
+    }
+    handleFlip(row, col);
+  }
+
   function handleNewRun() {
     clearPendingTimeouts();
 
@@ -295,7 +307,7 @@ export default function Classic() {
                     tile={tile}
                     theme={equippedTheme}
                     disabled={gameOver || awaitingNextLevel}
-                    onFlip={() => handleFlip(r, c)}
+                    onFlip={() => handleTileFlip(r, c)}
                     onNote={() => toggleNote(r, c)}
                     flipDelay={flipDelayFor(r, c, tile)}
                   />
@@ -315,6 +327,20 @@ export default function Classic() {
           </div>
 
           <p className="hint">Right-click (or long-press on mobile) a tile to note it.</p>
+
+          <div className="note-toggle">
+            <span className="note-toggle__label">Note Mode</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={noteMode}
+              aria-label="Toggle note mode"
+              className={`note-toggle__switch ${noteMode ? "is-on" : ""}`}
+              onClick={() => setNoteMode((v) => !v)}
+            >
+              <span className="note-toggle__knob" />
+            </button>
+          </div>
         </section>
 
         <aside className="sidebar">

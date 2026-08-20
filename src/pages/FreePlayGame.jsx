@@ -34,6 +34,10 @@ export default function FreePlayGame() {
   // Tile sprite paths (`/sprites/${value}_${theme}.png`) key off this
   const [equippedTheme] = useEquippedTheme();
 
+  // Mobile-only: when on, tapping a tile notes it instead of flipping it.
+  // Long-press-to-note (see Tile.jsx) still works independently either way.
+  const [noteMode, setNoteMode] = useState(false);
+
   const [level, setLevel] = useState(1);
   const [score, setScore] = useState(1);
   const [gameOver, setGameOver] = useState(false);
@@ -126,6 +130,14 @@ export default function FreePlayGame() {
     toggleNote(row, col);
   }
 
+  function handleTileFlip(row, col) {
+    if (noteMode) {
+      handleRightClickNote(row, col);
+      return;
+    }
+    handleFlip(row, col);
+  }
+
   function handleReset() {
     startLevel(level);
     setScore(1);
@@ -200,7 +212,7 @@ export default function FreePlayGame() {
                     tile={tile}
                     theme={equippedTheme}
                     disabled={gameOver}
-                    onFlip={() => handleFlip(r, c)}
+                    onFlip={() => handleTileFlip(r, c)}
                     onNote={() => handleRightClickNote(r, c)}
                     flipDelay={flipDelayFor(c, tile)}
                   />
@@ -220,6 +232,20 @@ export default function FreePlayGame() {
           </div>
 
           <p className="hint">Right-click (or long-press on mobile) a tile to note it.</p>
+
+          <div className="note-toggle">
+            <span className="note-toggle__label">Note Mode</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={noteMode}
+              aria-label="Toggle note mode"
+              className={`note-toggle__switch ${noteMode ? "is-on" : ""}`}
+              onClick={() => setNoteMode((v) => !v)}
+            >
+              <span className="note-toggle__knob" />
+            </button>
+          </div>
         </section>
 
         <aside className="sidebar">
