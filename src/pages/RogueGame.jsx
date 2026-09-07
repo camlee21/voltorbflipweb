@@ -10,6 +10,7 @@ import {
   rowStats,
   columnStats,
   revealBoard,
+  levelOptions,
 } from "../game/gameLogic";
 
 import { useAuthContext } from "../contexts/AuthContext";
@@ -24,6 +25,13 @@ const STAGGER_MS = 90;
 
 // How long the "You have earned X coins!" toast stays visible.
 const COIN_NOTIF_MS = 3000;
+
+// The highest level with a defined pattern pool — beating it loops back
+// instead of advancing to an undefined level.
+const MAX_LEVEL = levelOptions.length;
+
+// How long the max-level "well done" message stays up before looping back.
+const MAX_LEVEL_HOLD_MS = 2500;
 
 const POWERS = {
   Protect: {
@@ -81,7 +89,7 @@ function diagonalStats(grid) {
 
 function getMessageTone(msg) {
   if (!msg) return "";
-  if (msg.includes("beaten") || msg.includes("Protected") || msg.includes("Mega")) return "message--success";
+  if (msg.includes("beaten") || msg.includes("Protected") || msg.includes("Mega") || msg.includes("Well done")) return "message--success";
   if (msg.includes("lost") || msg.includes("reset")) return "message--error";
   return "message--neutral";
 }
@@ -116,6 +124,7 @@ export default function RogueGame() {
   const [showRewardPopup, setShowRewardPopup] = useState(false);
   const [showGameOverPopup, setShowGameOverPopup] = useState(false);
   const [rewardChoice, setRewardChoice] = useState(null); // power offered this level-up
+  const [awaitingMaxLevel, setAwaitingMaxLevel] = useState(false); // holding the "beat level 8" message before looping back
 
   // "You have earned X coins!" toast — shown when a run ends in a loss and
   // the final total score gets banked as coins.
@@ -171,14 +180,30 @@ export default function RogueGame() {
   // — no extra timer needed here, unlike Classic mode.
   useEffect(() => {
     if (grid.length === 0) return;
-    if (gameOver || showRewardPopup) return;
+    if (gameOver || showRewardPopup || awaitingMaxLevel) return;
     if (score !== maxScore) return;
+
+    if (level >= MAX_LEVEL) {
+      // No further pattern pool to advance into — bank the score like a
+      // normal level-up, show a one-off message, then loop back to MAX_LEVEL.
+      setMessage(`Well done, you beat Level ${MAX_LEVEL}!`);
+      setAwaitingMaxLevel(true);
+      const scoreMult = noOnesOn ? 2 : 1;
+      setTotalScore((t) => t + score * scoreMult);
+
+      setTimeout(() => {
+        setMessage("");
+        setAwaitingMaxLevel(false);
+        startNewLevel(MAX_LEVEL, currentPowers);
+      }, MAX_LEVEL_HOLD_MS);
+      return;
+    }
 
     setMessage("Level beaten!");
     setRewardChoice(randomPower(currentPowers));
     setShowRewardPopup(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [score, maxScore, gameOver, showRewardPopup, grid.length]);
+  }, [score, maxScore, gameOver, showRewardPopup, awaitingMaxLevel, grid.length]);
 
   function startNewLevel(levelNumber, powers) {
     const { grid: newGrid, maxScore: newMax } = buildLevel(levelNumber);
@@ -225,7 +250,7 @@ export default function RogueGame() {
   }
 
   function handleFlip(row, col) {
-    if (gameOver || showRewardPopup) return;
+    if (gameOver || showRewardPopup || awaitingMaxLevel) return;
     const tile = grid[row][col];
     if (tile.revealed) return;
 
@@ -311,7 +336,7 @@ export default function RogueGame() {
     }
 
   function toggleNote(row, col) {
-    if (gameOver || showRewardPopup) return;
+    if (gameOver || showRewardPopup || awaitingMaxLevel) return;
     const tile = grid[row][col];
     if (tile.revealed) return;
     const newGrid = grid.map((r) => r.map((t) => ({ ...t })));
@@ -458,7 +483,7 @@ export default function RogueGame() {
                     key={tile.id}
                     tile={tile}
                     theme={equippedTheme}
-                    disabled={gameOver || showRewardPopup}
+                    disabled={gameOver || showRewardPopup || awaitingMaxLevel}
                     onFlip={() => handleTileFlip(r, c)}
                     onNote={() => toggleNote(r, c)}
                     flipDelay={flipDelayFor(c, tile)}
@@ -528,7 +553,7 @@ export default function RogueGame() {
               type="button"
               className={`btn btn--ghost btn--peek ${peekArmed ? "armed-peek" : ""}`}
               onClick={() => setPeekArmed((a) => !a)}
-              disabled={gameOver || showRewardPopup}
+              disabled={gameOver || showRewardPopup || awaitingMaxLevel}
             >
               {peekArmed ? "Click a tile to peek…" : `Use Peek (${numPeeks} left)`}
             </button>

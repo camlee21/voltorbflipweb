@@ -9,7 +9,7 @@ export default function Privacy() {
       <h2 className="static-page-title">Privacy Policy</h2>
 
       <div className="game-description" style={{ textAlign: 'left', maxWidth: '640px', margin: '0 auto' }}>
-        <p style={{ marginBottom: '0.5rem', fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+        <p style={{ marginBottom: '0.5rem', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
           Last updated: August 2026
         </p>
 
@@ -98,10 +98,10 @@ export default function Privacy() {
 function Section({ title, children }) {
   return (
     <div style={{ marginTop: '1.5rem' }}>
-      <h3 style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      <h3 style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--color-text)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
         {title}
       </h3>
-      <div style={{ fontSize: '0.85rem', lineHeight: 1.75, color: 'var(--text-dim)' }}>
+      <div style={{ fontSize: '0.85rem', lineHeight: 1.75, color: 'var(--color-text-muted)' }}>
         {children}
       </div>
     </div>

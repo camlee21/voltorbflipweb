@@ -1,4 +1,4 @@
-/* ── Static pages (How to Play, Credits, Trainer Suggestions) ── */
+/* ── Static pages (How to Play, Privacy Policy, Trainer Suggestions) ── */
 .static-page {
   max-width: 840px;
   margin: 0 auto;
@@ -7,41 +7,79 @@
   align-items: center;
   gap: 1.25rem;
   padding: 1rem 0 2rem;
+  font-family: 'Nunito', sans-serif;
 }
 
+/* Bold Nunito + accent underline, matching the site's other static pages. */
 .static-page-title {
-  font-family: 'Press Start 2P', monospace;
-  font-size: clamp(0.85rem, 2.5vw, 1.15rem);
-  color: var(--green);
-  text-shadow: 0 0 16px rgba(74, 222, 128, 0.35);
-  letter-spacing: 0.04em;
+  position: relative;
+  font-family: 'Nunito', sans-serif;
+  font-size: clamp(1.3rem, 3.5vw, 1.75rem);
+  font-weight: 800;
+  color: var(--color-text);
+  letter-spacing: 0.01em;
   text-align: center;
+  padding-bottom: 0.6rem;
+}
+
+.static-page-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent-glow);
 }
 
 .static-page-back {
   align-self: flex-start;
 }
 
+/* Small section headings inside .game-description blocks. */
+.section-eyebrow {
+  text-align: center;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--accent);
+  margin-bottom: 1rem;
+  letter-spacing: 0.03em;
+}
+
 .game-description {
   max-width: 840px;
   margin: 2.5rem auto 0;
   padding: 1.25rem 1.5rem;
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
   backdrop-filter: blur(12px);
+  font-family: 'Nunito', sans-serif;
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--text-dim);
+  color: var(--color-text-muted);
   line-height: 1.75;
   text-align: center;
 }
 
+@media (max-width: 840px) {
+  .game-description {
+    font-size: 0.8rem;
+    padding: 1rem 1.1rem;
+    margin-top: 1.75rem;
+    text-align: left;
+  }
+}
+
 .back-btn {
   background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.15);
-  color: var(--text);
-  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  border-radius: var(--radius-sm);
   padding: 8px 16px;
   font-size: 13px;
   font-weight: 600;

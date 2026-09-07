@@ -8,6 +8,7 @@ import {
   rowStats,
   columnStats,
   revealBoard,
+  levelOptions,
 } from "../game/gameLogic";
 import "./FreePlayGame.css"; // shares the board/tile/panel look with Free Play
 import "./Classic.css";
@@ -30,6 +31,10 @@ const WIN_HOLD_MS = 2500;
 // How long the "You have earned X coins!" toast stays visible
 const COIN_NOTIF_MS = 3000;
 
+// The highest level with a defined pattern pool — beating it loops back
+// instead of advancing to an undefined level.
+const MAX_LEVEL = levelOptions.length;
+
 function buildLevel(levelNumber) {
   const pattern = getRandomPatternForLevel(levelNumber);
   return buildGrid(pattern); // { grid, maxScore }
@@ -37,7 +42,7 @@ function buildLevel(levelNumber) {
 
 function getMessageTone(msg) {
   if (!msg) return "";
-  if (msg.includes("beaten")) return "message--success";
+  if (msg.includes("beaten") || msg.includes("Well done")) return "message--success";
   if (msg.includes("lost") || msg.includes("pushed back")) return "message--error";
   return "message--neutral";
 }
@@ -116,14 +121,16 @@ export default function Classic() {
     if (gameOver || awaitingNextLevel) return;
     if (score !== maxScore) return;
 
-    setMessage("Level beaten!");
+    const beatMaxLevel = level >= MAX_LEVEL;
+
+    setMessage(beatMaxLevel ? `Well done, you beat Level ${MAX_LEVEL}!` : "Level beaten!");
     setOrigin(null); // no clicked tile to ripple from — use the diagonal wave
     setGrid((g) => revealBoard(g));
     setRevealing(true);
     setAwaitingNextLevel(true);
 
     const winTimeout = setTimeout(() => {
-      const nextLevel = level + 1;
+      const nextLevel = beatMaxLevel ? MAX_LEVEL : level + 1;
       setTotalScore((t) => t + score);
       setLevel(nextLevel);
       startNewLevel(nextLevel);

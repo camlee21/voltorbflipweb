@@ -7,15 +7,32 @@
   max-width: 720px;
   margin: 0 auto;
   padding: 32px 16px 60px;
+  font-family: 'Nunito', sans-serif;
 }
 
 .how-to-play-title {
-  font-family: "Press Start 2P", "Courier New", monospace;
-  font-size: 1.1rem;
+  position: relative;
+  font-family: 'Nunito', sans-serif;
+  font-size: clamp(1.3rem, 3.5vw, 1.75rem);
+  font-weight: 800;
   text-align: center;
-  color: var(--color-text, #eef1f7);
+  color: var(--color-text);
+  letter-spacing: 0.01em;
+  padding-bottom: 0.6rem;
   margin-bottom: 48px;
-  letter-spacing: 0.04em;
+}
+
+.how-to-play-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent-glow);
 }
 
 .how-to-play-section {
@@ -29,21 +46,25 @@
 
 .how-to-play-section__title {
   text-align: center;
-  font-family: "Press Start 2P", "Courier New", monospace;
-  font-size: 0.75rem;
-  color: var(--accent, #2c7644);
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--accent);
   margin-bottom: 1rem;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
 }
 
 .how-to-play-section__body {
   text-align: left;
+  font-family: 'Nunito', sans-serif;
   font-size: 0.85rem;
+  font-weight: 600;
   line-height: 1.75;
   color: var(--color-text-muted, #93a89d);
   background: var(--color-surface, #17231c);
   border: 1px solid var(--color-border, #2a3a2f);
-  border-radius: var(--radius-lg, 16px);
+  border-radius: var(--radius-md, 10px);
+  backdrop-filter: blur(12px);
   padding: 1.25rem 1.5rem;
 }
 
