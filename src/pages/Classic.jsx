@@ -76,13 +76,6 @@ export default function Classic() {
     setAwaitingNextLevel(false);
   }
 
-  // Each cleared level's score is banked as coins straight away, so leaving
-  // the page mid-run never loses anything already won.
-  function bankCoins(amount) {
-    if (!user || amount <= 0) return;
-    addCoins(amount);
-    showCoinToast(amount);
-  }
 
   function winLevel(levelScore, flips) {
     const next = classicLevelAfterWin(level, flips, winStreak);
@@ -99,8 +92,8 @@ export default function Classic() {
     setGrid(revealBoard);
     setRevealing(true);
     setAwaitingNextLevel(true);
+    // Added now rather than after the pause, so a New run during the pause still includes it.
     setTotalScore((t) => t + levelScore);
-    bankCoins(levelScore);
 
     schedule(() => {
       setLevel(next.level);
@@ -166,7 +159,12 @@ export default function Classic() {
     else handleFlip(row, col);
   }
 
+  // The run's total score is paid out as coins only when a new run starts.
   function handleNewRun() {
+    if (user && totalScore > 0) {
+      addCoins(totalScore);
+      showCoinToast(totalScore);
+    }
     setLevel(1);
     setTotalScore(0);
     setWinStreak(0);

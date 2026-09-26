@@ -101,14 +101,22 @@ describe("Free Play", () => {
 });
 
 describe("Classic", () => {
-  it("banks a cleared level's score straight away", () => {
+  it("pays out the run total only when a new run starts", () => {
     renderMode(<Classic />);
     flip(TWO);
     flip(THREE);
-    expect(addCoins).toHaveBeenCalledWith(6);
+    advance(3000); // on to level 2
+    expect(addCoins).not.toHaveBeenCalled();
+
+    flip(TWO);
+    flip(THREE);
+    advance(3000);
+    clickTwice("New run");
+    expect(addCoins).toHaveBeenCalledTimes(1);
+    expect(addCoins).toHaveBeenCalledWith(12);
   });
 
-  it("New Run during the win pause isn't undone by the pending level-up", () => {
+  it("New run during the win pause includes the level just won, and isn't undone by the pending level-up", () => {
     const { container } = renderMode(<Classic />);
     flip(TWO);
     flip(THREE);
@@ -116,6 +124,7 @@ describe("Classic", () => {
     advance(5000);
     expect(container.querySelector(".level-display").textContent).toBe("1");
     expect(addCoins).toHaveBeenCalledTimes(1);
+    expect(addCoins).toHaveBeenCalledWith(6);
   });
 });
 

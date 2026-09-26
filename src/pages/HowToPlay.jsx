@@ -49,8 +49,8 @@ export default function HowToPlay() {
           tiles on each, and you jump straight to Level 8!
         </p>
         <p>
-          Every board you clear adds its score to your total. If you're logged in, it's added to your wallet as
-          Coins straight away. Starting a <strong>New run</strong> takes you back to Level 1.
+          Every board you clear adds its score to your total. Starting a <strong>New run</strong> takes you back to
+          Level 1, and if you're logged in, your total is added to your wallet as Coins.
         </p>
 
         <h3>Free Play</h3>
@@ -77,8 +77,8 @@ export default function HowToPlay() {
 
         <h3>Coins and the Shop</h3>
         <p>
-          If you're <strong>logged in</strong>, your score is turned into Coins: in Classic each time you clear a
-          board, and in Rogue when your run ends (when you lose, start a New run, or leave the page). Spend them in
+          If you're <strong>logged in</strong>, your score is turned into Coins: in Classic when you start a New
+          run, and in Rogue when your run ends (when you lose, start a New run, or leave the page). Spend them in
           the <strong>Shop</strong> on themes, which change the tile artwork and the site's colours once equipped.
           Everything else works the same when you're logged out; you just won't earn or spend Coins.
         </p>
