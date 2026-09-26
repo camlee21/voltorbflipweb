@@ -23,70 +23,21 @@ function formatPokedollars(amount) {
   return `${sign}${abs.toLocaleString()}`;
 }
 
-export default function PokedollarCounter({ compact = false }) {
+// Coin balance in the header; doubles as the link to the Shop.
+export default function PokedollarCounter() {
   const { user } = useAuthContext();
   const { coins, loading } = useWalletContext();
 
-  const baseStyle = {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    height: compact ? "34px" : "40px",
-    padding: compact ? "0 10px" : "0 14px",
-    borderRadius: "10px",
-    border: "1px solid rgba(255,255,255,0.15)",
-    background: "rgba(255,255,255,0.08)",
-    backdropFilter: "blur(8px)",
-    transition: "background 0.2s, transform 0.15s",
-    flexShrink: 0,
-    whiteSpace: "nowrap",
-    textDecoration: "none",
-    color: "inherit",
-  };
-
-  const textStyle = {
-    fontWeight: 600,
-    fontSize: compact ? "12px" : "14px",
-    lineHeight: 1,
-  };
-
-  if (!user) {
-    return (
-      <Link
-        to="/shop"
-        title="Shop"
-        style={{ ...baseStyle, gap: "6px" }}
-        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.16)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.transform = 'translateY(0)' }}
-      >
-        <img
-          src="/pokedollar.png"
-          alt=""
-          style={{ width: compact ? "16px" : "18px", height: compact ? "16px" : "18px", objectFit: "contain" }}
-        />
-        <span style={textStyle}>
-          N/A
-        </span>
-      </Link>
-    );
-  }
+  const label = !user ? "Shop" : loading ? "…" : formatPokedollars(coins);
 
   return (
     <Link
       to="/shop"
-      title="Shop"
-      style={{ ...baseStyle, gap: "6px" }}
-      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.16)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.transform = 'translateY(0)' }}
+      className="header-chip"
+      aria-label={user && !loading ? `${coins.toLocaleString()} coins, open the Shop` : "Open the Shop"}
     >
-      <img
-        src="/pokedollar.png"
-        alt=""
-        style={{ width: compact ? "16px" : "18px", height: compact ? "16px" : "18px", objectFit: "contain" }}
-      />
-      <span style={textStyle}>
-        {loading ? "…" : formatPokedollars(coins)}
-      </span>
+      <img src="/pokedollar.png" alt="" className="header-chip__coin" />
+      {label}
     </Link>
   );
 }

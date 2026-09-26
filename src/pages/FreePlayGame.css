@@ -1,17 +1,8 @@
+/* Shared by all three game modes: the board frame, the readout sidebar,
+   messages and buttons. Mode-specific bits live in Classic.css / RogueGame.css. */
+
 .free-play-page {
   width: 100%;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 24px 24px 0; /* drop the bottom padding too, or shrink it */
-  gap: 32px;
-}
-
-.loading-text {
-  color: var(--color-text-muted);
-  font-family: var(--font-body);
-  margin-top: 80px;
 }
 
 /* Layout --------------------------------------------------------------- */
@@ -19,250 +10,166 @@
 .layout {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 32px;
-  width: 100%;
+  justify-content: center;
+  gap: 48px;
 }
 
-@media (max-width: 800px) {
-  .layout {
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-  }
-}
-
-/* Board panel ------------------------------------------------------------ */
+/* Board frame — the one loud element: a solid console screen with a hard drop. */
 
 .board-panel {
-  background: color-mix(in srgb, var(--color-surface) 75%, transparent);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: 28px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 16px;
+  padding: 24px;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 6px 0 var(--ledge);
 }
 
 .board {
   display: grid;
-  grid-template-columns: repeat(5, var(--tile-size)) var(--tile-size);
+  grid-template-columns: repeat(6, var(--tile-size));
   gap: 10px;
 }
 
 .hint {
-  font-family: var(--font-body);
-  font-size: 0.8rem;
+  font-size: 0.8125rem;
   color: var(--color-text-muted);
-  letter-spacing: 0.03em;
-  margin: 0;
+  text-align: center;
 }
 
-/* Sidebar — the "control panel" ------------------------------------------ */
+/* Sidebar — a plain readout, no panel ---------------------------------- */
 
 .sidebar {
-  background: color-mix(in srgb, var(--color-surface) 75%, transparent);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  width: 300px;
+  width: 240px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  flex-shrink: 0;
-}
-
-@media (max-width: 800px) {
-  .sidebar {
-    width: 100%;
-    max-width: 380px;
-  }
+  padding-top: 6px;
 }
 
 .sidebar__group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .field-label {
-  font-family: var(--font-body);
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
+  font-size: 0.875rem;
+  font-weight: 700;
   color: var(--color-text-muted);
-  font-weight: 800;
 }
 
-.level-pills {
+/* Big level number under its label. */
+.level-display {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  line-height: 1;
+  color: var(--color-accent-strong);
+}
+
+/* Label ... value rows. */
+.readout {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  border-top: 1px solid var(--color-border);
+}
+
+.readout__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.readout__label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.readout__value {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Free Play's level picker */
+.level-pills {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 6px;
 }
 
 .level-pill {
-  flex: 1 0 calc(25% - 6px);
-  background: color-mix(in srgb, var(--color-surface-recessed) 90%, transparent);
-  color: var(--color-text-muted);
+  height: 40px;
   border: 1px solid var(--color-border-strong);
-  border-radius: 999px;
-  padding: 6px 0;
-  font-family: var(--font-body);
-  font-size: 0.85rem;
-  font-weight: 700;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-family: var(--font-display);
+  font-size: 0.75rem;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
 }
 
 .level-pill:hover {
-  border-color: var(--color-accent);
   color: var(--color-text);
-  transform: translateY(-1px);
+  border-color: var(--color-accent);
 }
 
 .level-pill.active {
   background: var(--color-accent);
-  color: var(--color-accent-ink);
   border-color: var(--color-accent);
-  box-shadow: 0 2px 10px color-mix(in srgb, var(--color-accent) 45%, transparent);
+  color: var(--color-accent-ink);
 }
 
-/* Scoreboard — the signature arcade-readout element ----------------------- */
-
-.scoreboard {
-  background: color-mix(in srgb, var(--color-surface-recessed) 90%, transparent);
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-md);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5), 0 0 14px color-mix(in srgb, var(--color-accent) 25%, transparent);
-}
-
-.scoreboard__label {
-  font-family: var(--font-body);
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  color: var(--color-text-muted);
-}
-
-.scoreboard__value {
-  font-family: var(--font-display);
-  font-size: 1.8rem;
-  color: var(--color-accent);
-  text-shadow: 0 0 16px color-mix(in srgb, var(--color-accent) 45%, transparent);
-  line-height: 1;
-}
-
-.message {
-  font-family: var(--font-body);
-  font-weight: 700;
-  font-size: 0.85rem;
-  text-align: center;
-  margin: 0;
-  padding: 10px 14px;
-  border-radius: var(--radius-md);
-  animation: message-slide-in 0.3s ease;
-}
-
-.message--success {
-  color: var(--color-success);
-  background: color-mix(in srgb, var(--color-success) 15%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-success) 35%, transparent);
-}
-
-.message--error {
-  color: var(--color-danger);
-  background: color-mix(in srgb, var(--color-danger) 15%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-danger) 35%, transparent);
-}
-
-.message--neutral {
-  color: var(--color-text);
-  background: color-mix(in srgb, var(--color-surface-recessed) 90%, transparent);
-  border: 1px solid var(--color-border);
-}
-
-@keyframes message-slide-in {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Buttons ------------------------------------------------------------------ */
+/* Buttons and messages are global — see index.css. */
 
 .sidebar__actions {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
-.btn {
-  font-family: var(--font-body);
-  font-weight: 700;
-  font-size: 0.95rem;
-  padding: 11px 16px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition: transform 0.08s ease, filter 0.12s ease, box-shadow 0.12s ease, background 0.15s ease, border-color 0.15s ease;
-}
-
-.btn:active {
-  transform: scale(0.98);
-}
-
-.btn--ghost {
-  background: color-mix(in srgb, var(--color-surface-raised) 90%, transparent);
-  border-color: var(--color-border-strong);
-  color: var(--color-text);
-}
-
-.btn--ghost:hover {
-  border-color: var(--color-accent);
-  background: color-mix(in srgb, var(--color-surface-raised) 100%, var(--color-accent) 6%);
-}
-
-.btn--ghost.armed {
-  border-color: var(--color-danger);
-  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-danger) 35%, transparent);
-}
-
-.btn--primary {
-  background: var(--color-accent);
-  color: var(--color-accent-ink);
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--color-accent) 40%, transparent);
-}
-
-.btn--primary:hover {
-  background: var(--color-accent-strong);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px color-mix(in srgb, var(--color-accent) 45%, transparent);
-}
-
-/* ── Mobile scaling — synced to Layout.css's 800px header breakpoint ── */
+/* ── Mobile ── */
 @media (max-width: 800px) {
+  .layout {
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+
   .board-panel {
     padding: clamp(10px, 3vw, 16px);
+    max-width: 100%;
   }
 
   .board {
     gap: clamp(4px, 1.5vw, 10px);
+  }
+
+  .sidebar {
+    width: 100%;
+    max-width: 400px;
+    padding-top: 0;
+  }
+
+  /* Classic/Rogue: level on the left, scores on the right, everything else underneath. */
+  .sidebar--split {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 28px;
+    row-gap: 16px;
+    align-items: start;
+  }
+
+  .sidebar--split > :not(.sidebar__group:first-child, .readout) {
+    grid-column: 1 / -1;
   }
 }

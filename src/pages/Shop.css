@@ -1,101 +1,41 @@
 .shop-page {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 24px 16px 60px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.shop-title {
-  position: relative;
-  font-family: 'Nunito', sans-serif;
-  font-size: clamp(1.3rem, 3.5vw, 1.75rem);
-  font-weight: 800;
-  color: var(--color-text);
-  letter-spacing: 0.01em;
-  text-align: center;
-  padding-bottom: 0.6rem;
-  margin: 0 0 8px;
-}
-
-.shop-title::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 48px;
-  height: 4px;
-  border-radius: 999px;
-  background: var(--accent);
-  box-shadow: 0 0 12px var(--accent-glow);
-}
-
-.shop-subtitle {
-  font-family: 'Nunito', sans-serif;
-  color: var(--color-text-muted);
-  font-weight: 600;
-  text-align: center;
-  margin: 0 0 28px;
-  max-width: 480px;
+  width: 100%;
 }
 
 .shop-grid {
   display: grid;
-  grid-template-columns: 1fr; /* one theme per row on mobile */
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 16px;
-  width: 100%;
-}
-
-@media (min-width: 900px) {
-  .shop-grid {
-    grid-template-columns: repeat(4, 1fr); /* four per row on desktop */
-  }
+  list-style: none;
 }
 
 .theme-card {
-  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 16px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(8px);
-  transition: transform 0.15s, border-color 0.2s, opacity 0.2s, filter 0.2s;
-}
-
-.theme-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--theme-accent);
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
 }
 
 .theme-card--equipped {
   border-color: var(--theme-accent);
-  box-shadow: 0 0 0 2px var(--theme-accent) inset;
 }
 
-/* Fully unclickable/uninteractable when logged out — no hover, no clicks. */
+/* Logged out: visible but not interactive. */
 .theme-card--locked {
   pointer-events: none;
-  opacity: 0.5;
-  filter: grayscale(0.5);
+  opacity: 0.55;
 }
 
-.theme-card--locked:hover {
-  transform: none;
-  border-color: rgba(255, 255, 255, 0.15);
-}
-
-.theme-card__swatches {
+/* The tiles shown on the theme's own background, with its accent underneath. */
+.theme-card__preview {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 6px;
-  background: rgba(0, 0, 0, 0.18);
-  border-radius: 10px;
-  padding: 8px;
+  padding: 14px;
+  background: var(--theme-bg);
+  border-bottom: 4px solid var(--theme-accent);
 }
 
 .theme-card__tile {
@@ -103,42 +43,34 @@
   aspect-ratio: 1 / 1;
   object-fit: contain;
   image-rendering: pixelated;
+  border-radius: 4px;
 }
 
-.theme-card__colors {
+.theme-card__body {
   display: flex;
-  gap: 8px;
-}
-
-.theme-card__swatch {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
 }
 
 .theme-card__footer {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
+  gap: 8px;
 }
 
 .theme-card__name {
-  font-weight: 700;
-  font-size: 15px;
+  font-weight: 800;
 }
 
 .theme-card__price {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-weight: 600;
-  font-size: 13px;
+  gap: 5px;
+  font-size: 0.875rem;
+  font-weight: 700;
   color: var(--color-text-muted);
-}
-
-.theme-card__price--free {
-  color: var(--theme-accent);
 }
 
 .theme-card__coin-icon {
@@ -148,22 +80,22 @@
 }
 
 .theme-card__btn {
-  margin-top: 4px;
-  padding: 8px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.08);
-  color: inherit;
-  font: inherit;
-  font-weight: 700;
-  font-size: 13px;
+  --btn-ledge: var(--ledge);
+  padding: 9px 12px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 800;
   cursor: pointer;
-  transition: background 0.2s, transform 0.15s;
+  box-shadow: 0 3px 0 var(--btn-ledge);
+  transition: transform 0.06s ease, box-shadow 0.06s ease;
 }
 
-.theme-card__btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.16);
-  transform: translateY(-1px);
+.theme-card__btn:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--btn-ledge);
 }
 
 .theme-card__btn:disabled {
@@ -171,22 +103,39 @@
 }
 
 .theme-card__btn--buy {
+  --btn-ledge: color-mix(in srgb, var(--theme-accent) 50%, black);
   background: var(--theme-accent);
+  border-color: var(--theme-accent);
   color: #10131a;
-  border-color: transparent;
-}
-
-.theme-card__btn--buy:hover:not(:disabled) {
-  filter: brightness(1.08);
 }
 
 .theme-card__btn--equipped {
   background: transparent;
   border-color: var(--theme-accent);
-  color: var(--theme-accent);
+  color: var(--color-text);
+  box-shadow: none;
 }
 
 .theme-card__btn--error {
-  background: #d94b4b;
+  --btn-ledge: color-mix(in srgb, var(--color-danger) 50%, black);
+  background: var(--color-danger);
+  border-color: var(--color-danger);
   color: #fff;
+}
+
+@media (max-width: 480px) {
+  .shop-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .theme-card__preview,
+  .theme-card__body {
+    padding: 10px;
+  }
+
+  .theme-card__footer {
+    flex-direction: column;
+    gap: 2px;
+  }
 }

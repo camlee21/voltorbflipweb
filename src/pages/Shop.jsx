@@ -55,14 +55,16 @@ export default function Shop() {
         description="Spend the Coins you win playing Voltorb Flip on Pokémon-inspired themes for the tiles and site colours."
         path="/shop"
       />
-      <h1 className="shop-title">Shop</h1>
-      <p className="shop-subtitle">
-        {user
-          ? "Spend your Coins on new themes!"
-          : "Log in to purchase and equip themes with your Coins!"}
-      </p>
+      <header className="page-intro">
+        <h2 className="page-title">Shop</h2>
+        <p className="page-lede">
+          {user
+            ? "Themes change the tiles and the site's colours. Buy one with Coins, then equip it whenever you like."
+            : "Log in to buy and equip themes with the Coins you win."}
+        </p>
+      </header>
 
-      <div className="shop-grid">
+      <ul className="shop-grid">
         {THEMES.map((theme) => {
           const owned = isOwned(theme);
           const equipped = equippedTheme === theme.id;
@@ -70,14 +72,12 @@ export default function Shop() {
           const showError = errorId === theme.id;
 
           return (
-            <div
+            <li
               key={theme.id}
-              className={`theme-card ${!user ? "theme-card--locked" : ""} ${
-                equipped ? "theme-card--equipped" : ""
-              }`}
+              className={`theme-card ${!user ? "theme-card--locked" : ""} ${equipped ? "theme-card--equipped" : ""}`}
               style={{ "--theme-bg": theme.bgColour, "--theme-accent": theme.accentColour }}
             >
-              <div className="theme-card__swatches">
+              <div className="theme-card__preview">
                 {TILE_VALUES.map((v) => (
                   <img
                     key={v}
@@ -89,52 +89,47 @@ export default function Shop() {
                 ))}
               </div>
 
-              <div className="theme-card__colors">
-                <span className="theme-card__swatch" style={{ background: theme.bgColour }} title="Background" />
-                <span className="theme-card__swatch" style={{ background: theme.accentColour }} title="Accent" />
-              </div>
+              <div className="theme-card__body">
+                <div className="theme-card__footer">
+                  <span className="theme-card__name">{theme.label}</span>
+                  {theme.id === "classic" ? (
+                    <span className="theme-card__price">Free</span>
+                  ) : (
+                    <span className="theme-card__price">
+                      <img src="/pokedollar.png" alt="" className="theme-card__coin-icon" />
+                      {theme.price.toLocaleString()}
+                    </span>
+                  )}
+                </div>
 
-              <div className="theme-card__footer">
-                <span className="theme-card__name">{theme.label}</span>
-                {theme.id === "classic" ? (
-                  <span className="theme-card__price theme-card__price--free">Default</span>
+                {equipped ? (
+                  <button type="button" className="theme-card__btn theme-card__btn--equipped" disabled>
+                    Equipped
+                  </button>
+                ) : owned ? (
+                  <button
+                    type="button"
+                    className="theme-card__btn"
+                    onClick={() => handleEquip(theme)}
+                    disabled={!user}
+                  >
+                    Equip
+                  </button>
                 ) : (
-                  <span className="theme-card__price">
-                    <img src="/pokedollar.png" alt="" className="theme-card__coin-icon" />
-                    {theme.price.toLocaleString()}
-                  </span>
+                  <button
+                    type="button"
+                    className={`theme-card__btn theme-card__btn--buy ${showError ? "theme-card__btn--error" : ""}`}
+                    onClick={() => handleBuy(theme)}
+                    disabled={!user || isPending || loading}
+                  >
+                    {isPending ? "Buying…" : showError ? "Not enough coins" : "Buy"}
+                  </button>
                 )}
               </div>
-
-              {equipped ? (
-                <button type="button" className="theme-card__btn theme-card__btn--equipped" disabled>
-                  Equipped
-                </button>
-              ) : owned ? (
-                <button
-                  type="button"
-                  className="theme-card__btn"
-                  onClick={() => handleEquip(theme)}
-                  disabled={!user}
-                >
-                  Equip
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className={`theme-card__btn theme-card__btn--buy ${
-                    showError ? "theme-card__btn--error" : ""
-                  }`}
-                  onClick={() => handleBuy(theme)}
-                  disabled={!user || isPending || loading}
-                >
-                  {isPending ? "…" : showError ? "Can't afford" : "Buy"}
-                </button>
-              )}
-            </div>
+            </li>
           );
         })}
-      </div>
+      </ul>
     </main>
   );
 }

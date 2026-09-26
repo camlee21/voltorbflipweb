@@ -283,7 +283,7 @@ export default function RogueGame() {
             <span className="powers-bar__label">Powers</span>
             <div className="powers-bar__icons">
               {powers.length === 0 && (
-                <span className="powers-bar__empty">None yet - beat a level to pick one up.</span>
+                <span className="powers-bar__empty">None yet. Beat a level to pick one up.</span>
               )}
               {powers.map((power) => (
                 <button
@@ -319,22 +319,22 @@ export default function RogueGame() {
           <NoteToggle on={noteMode} onChange={setNoteMode} />
         </section>
 
-        <aside className="sidebar">
+        <aside className="sidebar sidebar--split">
           <div className="sidebar__group">
             <span className="field-label">Level</span>
-            <div className="rogue-level-display">{level}</div>
+            <div className="level-display">{level}</div>
           </div>
 
-          <div className="rogue-scores">
-            <div className="scoreboard">
-              <span className="scoreboard__label">Lvl. Score</span>
-              <span className="scoreboard__value">{score}</span>
+          <dl className="readout">
+            <div className="readout__row">
+              <dt className="readout__label">Level score</dt>
+              <dd className="readout__value">{score}</dd>
             </div>
-            <div className="scoreboard">
-              <span className="scoreboard__label">Total</span>
-              <span className="scoreboard__value">{totalScore}</span>
+            <div className="readout__row">
+              <dt className="readout__label">Total</dt>
+              <dd className="readout__value">{totalScore}</dd>
             </div>
-          </div>
+          </dl>
 
           {powers.includes("Peek") && (
             <button
@@ -344,7 +344,7 @@ export default function RogueGame() {
               disabled={boardLocked}
               aria-pressed={peekArmed}
             >
-              {peekArmed ? "Click a tile to peek…" : `Use Peek (${charges.Peek ?? 0} left)`}
+              {peekArmed ? "Choose a tile to peek at" : `Use Peek (${charges.Peek ?? 0} left)`}
             </button>
           )}
 
@@ -361,7 +361,7 @@ export default function RogueGame() {
               className={`btn btn--ghost ${pendingAction === "reset" ? "armed" : ""}`}
               onClick={() => confirm("reset", handleNewRun)}
             >
-              New Run
+              New run
             </button>
           </div>
         </aside>

@@ -9,8 +9,7 @@
 }
 
 .note-toggle__label {
-  font-family: var(--font-body);
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   font-weight: 700;
   color: var(--color-text-muted);
 }

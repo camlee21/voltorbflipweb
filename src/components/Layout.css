@@ -1,173 +1,140 @@
 /* ── Layout shell ── */
 .app-root {
   min-height: 100vh;
-  position: relative;
-  background:
-    linear-gradient(135deg, var(--bg-main) 0%, var(--bg-alt) 40%, var(--bg-main) 70%, var(--bg-main) 100%);
-  transition: background 0.4s ease;
-}
-
-.bg-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  background-image:
-    radial-gradient(ellipse at 20% 20%, rgba(44, 118, 68, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 80%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
-    url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.015'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-  pointer-events: none;
+  /* The theme's two background tones: a lighter band behind the header fading into the page. */
+  background: linear-gradient(180deg, var(--bg-alt) 0, var(--bg-main) 420px) no-repeat, var(--bg-main);
 }
 
 .content-wrapper {
-  position: relative;
-  z-index: 1;
   max-width: 960px;
   margin: 0 auto;
-  padding: 0.2rem 1.5rem 3rem;
+  padding: 20px 24px 32px;
 }
 
-header {
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-/* ── Site banner (logo + title, left of the header buttons) ── */
-.site-banner {
+/* ── Header ── */
+.site-header {
   display: flex;
   align-items: center;
-  gap: clamp(10px, 3vw, 20px);
-  text-decoration: none;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 36px;
 }
 
-.site-banner__icon {
-  width: clamp(40px, 8vw, 64px);
-  height: clamp(40px, 8vw, 64px);
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-decoration: none;
+  min-width: 0;
+}
+
+.brand__icon {
+  width: 52px;
+  height: 52px;
   border-radius: var(--radius-md);
-  border: 2px solid #ffffff;
+  border: 2px solid var(--color-text);
   object-fit: cover;
   flex-shrink: 0;
 }
 
-.site-banner__titles {
+.brand__text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  text-align: left;
+  gap: 6px;
 }
 
-.site-banner__title {
+.brand__title {
   font-family: var(--font-display);
-  font-size: clamp(1rem, 2.8vw, 1.4rem);
-  color: var(--accent);
-  letter-spacing: 1px;
-  text-shadow: 0 0 20px var(--accent-glow);
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--color-accent-strong);
+  white-space: nowrap;
 }
 
-.site-banner__subtitle {
-  font-family: var(--font-body);
-  font-size: clamp(0.7rem, 1.8vw, 0.95rem);
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 2px;
-}
-
-/* ── Ko-fi button (accent-themed) ── */
-.kofi-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: var(--accent);
-  color: var(--accent-text);
-  text-decoration: none;
-  font-family: 'Nunito', 'Segoe UI', sans-serif;
+.brand__byline {
+  font-size: 0.875rem;
   font-weight: 700;
-  padding: 10px 16px;
-  border: 1px solid var(--accent-border);
-  border-radius: 100px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease;
-  font-size: 15px;
+  line-height: 1;
+  color: var(--color-text-muted);
 }
 
-.kofi-btn:hover {
-  transform: scale(1.03);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.15), 0 0 18px var(--accent-glow);
-}
-
-.header-desktop {
+/* Coins and Ko-fi on top, account controls underneath, both right-aligned. */
+.header-actions {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 16px;
-  width: 100%;
-  height: 140px;
-}
-
-/* ── Mobile header: hidden above the breakpoint, single compact row below it ── */
-.header-mobile {
-  display: none;
-}
-
-.header-mobile__actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
   flex-shrink: 0;
 }
 
-.header-desktop__side {
+.header-actions__row {
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  flex: 1;
-  margin-top: 12px;
-}
-
-.header-desktop__links {
-  display: flex;
-  justify-content: flex-end;
   align-items: center;
   gap: 10px;
 }
 
-.header-desktop__auth {
-  display: flex;
-  justify-content: flex-end;
+/* Coin counter and plain header buttons share one quiet chip style. */
+.header-chip,
+.header-btn {
+  display: inline-flex;
   align-items: center;
-  margin-top: 12px;
-  margin-bottom: 44px;
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
 }
 
-.auth-user {
-  display: flex;
+.header-chip:hover,
+.header-btn:hover {
+  background: var(--color-surface-raised);
+}
+
+.header-chip__coin {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.header-btn--accent {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+.header-btn--accent:hover {
+  background: var(--color-accent-strong);
+  border-color: var(--color-accent-strong);
+}
+
+/* Ko-fi is the one highlighted link in the header. */
+.kofi-btn {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
+  height: 38px;
+  padding: 0 16px;
+  border: 1px solid var(--color-accent);
+  border-radius: 999px;
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+  font-size: 0.875rem;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
-.social-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(8px);
-  transition: background 0.2s, transform 0.15s;
-  flex-shrink: 0;
-}
-
-.social-btn:hover,
-.social-btn:focus-visible {
-  background: rgba(255, 255, 255, 0.16);
-  transform: translateY(-1px);
-}
-
-.social-btn__img {
-  width: 22px;
-  height: 22px;
-  object-fit: contain;
+.kofi-btn:hover {
+  background: var(--color-accent-strong);
+  border-color: var(--color-accent-strong);
 }
 
 .kofi-btn__cup {
@@ -177,137 +144,20 @@ header {
   object-fit: contain;
 }
 
-.kofi-btn__cup--small {
-  width: 16px;
-  height: 16px;
-}
-
-.icon-btn {
+.auth-user {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-sm, 8px);
-  border: 1px solid rgba(255,255,255,0.15);
-  background: rgba(255,255,255,0.08);
-  flex-shrink: 0;
+  gap: 10px;
 }
 
-.kofi-btn--icon-only {
-  background-color: var(--accent);
-  border-color: var(--accent-border);
-}
-
-.auth-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-}
-
-.auth-modal {
-  background: var(--bg-alt);
-  border: 1px solid var(--panel-border);
-  border-radius: 16px;
-  padding: 1.75rem 1.5rem 1.5rem;
-  width: 100%;
-  max-width: 400px;
-  position: relative;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-}
-
-.auth-close {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: none;
-  border: none;
-  color: var(--text-dim);
-  font-size: 1rem;
-  cursor: pointer;
-  transition: color 0.2s;
-  line-height: 1;
-}
-
-.auth-close:hover {
-  color: var(--text);
-}
-
-.auth-tabs {
-  display: flex;
-  margin-bottom: 1.5rem;
-  border-bottom: 1px solid var(--panel-border);
-}
-
-.auth-tab {
-  flex: 1;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--text-dim);
-  font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: 700;
-  padding: 0.6rem 0;
-  cursor: pointer;
-  margin-bottom: -1px;
-  transition: color 0.2s, border-color 0.2s;
-}
-
-.auth-tab.active {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-}
-
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.auth-btn {
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.15);
-  color: var(--text);
-  border-radius: 8px;
-  padding: 8px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.2s;
-  white-space: nowrap;
-}
-
-.auth-btn:hover {
-  background: rgba(255,255,255,0.14);
-}
-
-.auth-btn.accent {
-  background: var(--accent);
-  color: var(--accent-text);
-  border-color: var(--accent);
-  box-shadow: 0 2px 8px var(--accent-glow);
-}
-
-.auth-btn.accent:hover {
-  opacity: 0.9;
-}
-
-.auth-user-label {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-dim);
+.auth-user__name {
   max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
 }
 
 /* Hidden header for search results */
@@ -323,32 +173,72 @@ header {
   border: 0;
 }
 
-.mobile-auth-row {
-  display: none;
-}
-
 @media (max-width: 800px) {
   .content-wrapper {
-    padding: 0.2rem 0.75rem 2rem;
+    padding: 14px 16px 24px;
   }
 
-  .header-desktop {
+  /* The two action rows join the header directly: chips beside the brand,
+     account controls on their own centred row underneath. */
+  .site-header {
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    gap: 10px;
+  }
+
+  .header-actions {
+    display: contents;
+  }
+
+  .header-actions__row--auth {
+    width: 100%;
+    justify-content: center;
+    margin-top: 2px;
+  }
+
+  .brand {
+    gap: 10px;
+  }
+
+  .brand__icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .brand__title {
+    font-size: 0.75rem;
+  }
+
+  .brand__byline {
+    font-size: 0.75rem;
+  }
+
+  .header-actions,
+  .header-actions__row {
+    gap: 6px;
+  }
+
+  /* Icon-only Ko-fi on phones. */
+  .kofi-btn {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .kofi-btn__label {
     display: none;
   }
 
-  .header-mobile {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    width: 100%;
-    padding: 0.5rem 0;
+  .header-chip,
+  .header-btn {
+    height: 34px;
+    padding: 0 10px;
+    font-size: 0.8125rem;
   }
 
-  .mobile-auth-row {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 8px;
+  .auth-user__name {
+    max-width: 160px;
+    font-size: 0.8125rem;
   }
 }

@@ -12,7 +12,6 @@ import { useConfirmArm } from "../hooks/useConfirmArm";
 import "./FreePlayGame.css";
 
 const LEVELS = levelOptions.map((_, i) => i + 1);
-const BACKGROUND_IMAGE = `/sprites/voltorb_background.png`;
 // Delay before the whole board flips up after a loss.
 const LOSS_REVEAL_MS = 500;
 
@@ -117,7 +116,7 @@ export default function FreePlayGame() {
   }
 
   return (
-    <div className="free-play-page" style={{ "--bg-image": `url(${BACKGROUND_IMAGE})` }}>
+    <div className="free-play-page">
       <div className="layout">
         <section className="board-panel" aria-label="Free Play board">
           <Board
@@ -153,10 +152,12 @@ export default function FreePlayGame() {
             </div>
           </div>
 
-          <div className="scoreboard">
-            <span className="scoreboard__label">Lvl. Score</span>
-            <span className="scoreboard__value">{score}</span>
-          </div>
+          <dl className="readout">
+            <div className="readout__row">
+              <dt className="readout__label">Level score</dt>
+              <dd className="readout__value">{score}</dd>
+            </div>
+          </dl>
 
           {message && (
             <p className={`message ${getMessageTone(message)}`} role="status">

@@ -11,8 +11,7 @@ import {
   classicLevelAfterWin,
   MAX_LEVEL,
 } from "../game/gameLogic";
-import "./FreePlayGame.css"; // shares the board/tile/panel look with Free Play
-import "./Classic.css";
+import "./FreePlayGame.css"; // the shared game styles
 
 import { useAuthContext } from "../contexts/useAuthContext";
 import { useWalletContext } from "../contexts/useWalletContext";
@@ -177,7 +176,7 @@ export default function Classic() {
   }
 
   return (
-    <div className="free-play-page classic-page">
+    <div className="free-play-page">
       <CoinToast amount={coinToast} />
 
       <div className="layout">
@@ -197,23 +196,23 @@ export default function Classic() {
           <NoteToggle on={noteMode} onChange={setNoteMode} />
         </section>
 
-        <aside className="sidebar">
+        <aside className="sidebar sidebar--split">
           <div className="sidebar__group">
             <span className="field-label">Level</span>
-            <div className="classic-level-display">{level}</div>
+            <div className="level-display">{level}</div>
           </div>
 
-          <div className="classic-scores">
-            <div className="scoreboard">
-              <span className="scoreboard__label">Lvl. Score</span>
+          <dl className="readout">
+            <div className="readout__row">
+              <dt className="readout__label">Level score</dt>
               {/* HGSS shows 0 until the first flip; score is a running product, so it starts at 1. */}
-              <span className="scoreboard__value">{flipCount === 0 ? 0 : score}</span>
+              <dd className="readout__value">{flipCount === 0 ? 0 : score}</dd>
             </div>
-            <div className="scoreboard">
-              <span className="scoreboard__label">Total</span>
-              <span className="scoreboard__value">{totalScore}</span>
+            <div className="readout__row">
+              <dt className="readout__label">Total</dt>
+              <dd className="readout__value">{totalScore}</dd>
             </div>
-          </div>
+          </dl>
 
           {message && (
             <p className={`message ${getMessageTone(message)}`} role="status">
@@ -228,7 +227,7 @@ export default function Classic() {
               className={`btn btn--ghost ${pendingAction === "reset" ? "armed" : ""}`}
               onClick={() => confirm("reset", handleNewRun)}
             >
-              New Run
+              New run
             </button>
           </div>
         </aside>

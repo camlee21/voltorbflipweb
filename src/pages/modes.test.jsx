@@ -112,9 +112,9 @@ describe("Classic", () => {
     const { container } = renderMode(<Classic />);
     flip(TWO);
     flip(THREE);
-    clickTwice("New Run");
+    clickTwice("New run");
     advance(5000);
-    expect(container.querySelector(".classic-level-display").textContent).toBe("1");
+    expect(container.querySelector(".level-display").textContent).toBe("1");
     expect(addCoins).toHaveBeenCalledTimes(1);
   });
 });
@@ -138,12 +138,12 @@ describe("Rogue", () => {
   it("New Run banks an unfinished run, and doesn't bank a lost one twice", () => {
     renderMode(<RogueGame />);
     clearLevelTakingBonus();
-    clickTwice("New Run");
+    clickTwice("New run");
     expect(addCoins).toHaveBeenCalledWith(56);
 
     clearLevelTakingBonus();
     flip(VOLTORB);
-    clickTwice("New Run");
+    clickTwice("New run");
     expect(addCoins).toHaveBeenCalledTimes(2);
   });
 
