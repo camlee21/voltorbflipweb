@@ -1,8 +1,14 @@
+import PageMeta from "../components/PageMeta";
 import "./HowToPlay.css";
 
 export default function HowToPlay() {
   return (
     <main className="static-page how-to-play">
+      <PageMeta
+        title="How to Play Voltorb Flip | Rules, Classic, Free Play & Rogue"
+        description="Learn the rules of Voltorb Flip from Pokémon HeartGold and SoulSilver: how the row and column counters work, how levels go up and down, and every Rogue mode power."
+        path="/how-to-play"
+      />
       <h2 className="static-page-title how-to-play-title">How to Play</h2>
 
       {/* Controls Block */}
@@ -12,8 +18,8 @@ export default function HowToPlay() {
           <p>
             Every board is a <strong>5x5 grid</strong> of hidden tiles. Each tile hides either a{" "}
             <strong>Voltorb</strong> or a <strong>multiplier</strong> (1, 2, or 3). Flip a multiplier
-            tile and your level score is multiplied by that value! Flip a Voltorb and the run ends,
-            with whatever score you'd built up for the level lost.
+            tile and your level score is multiplied by that value! Flip a Voltorb and you lose
+            whatever score you'd built up for the level.
           </p>
 
           <p>
@@ -28,19 +34,21 @@ export default function HowToPlay() {
         <div className="how-to-play-section__body">
           <p>
             In <strong>Classic mode</strong>, taken straight from HeartGold and SoulSilver's Game Corner, you start at Level 1 and
-            progress to the next level by clearing the board. Each level becomes more difficult as more Voltorbs and less
+            progress to the next level by clearing the board. Each level becomes more difficult as more Voltorbs and fewer
             multipliers make up the board.
           </p>
 
           <p>
-            Flip a Voltorb doesn't instantly end the game! If you have flipped enough tiles that round, you stay on the same level and
-            get to try again. However, if you haven't flipped enough tiles, you are reverted back to a previous level based on how many
-            tiles you flipped. 
+            Flipping a Voltorb doesn't end your run! You lose that level's score, and if you
+            flipped at least as many tiles as your level number, you stay on the same level and get to try again. If you flipped
+            fewer, you drop back to the level matching the number of tiles you flipped. Clear five boards in a row, flipping at
+            least 8 tiles on each, and you jump straight to Level 8!
           </p>
 
           <p>
-            Only starting a <strong>New Game</strong> will erase the Coins you have built up, but if you have logged in, they are added
-            to your wallet and can be spent in the Shop to unlock themes for the website!
+            Every board you clear adds its score to your total. If you have logged in, it is added to your wallet as Coins straight
+            away, which can be spent in the Shop to unlock themes for the website! Starting a <strong>New Run</strong> takes you
+            back to Level 1.
           </p>
         </div>
       </div>
@@ -72,7 +80,7 @@ export default function HowToPlay() {
           <ul className="how-to-play-list">
             <li className="how-to-play-list-item">
               <strong>Protect</strong>
-              <span>Survive a Voltorb instead of losing.</span>
+              <span>Survive a Voltorb instead of losing. Picking it up again adds another charge.</span>
             </li>
             <li className="how-to-play-list-item">
               <strong>Corner Count</strong>
@@ -89,7 +97,7 @@ export default function HowToPlay() {
             <li className="how-to-play-list-item">
               <strong>Peek</strong>
               <span>
-                Peek at a tile's value without flipping it.
+                Peek at a tile's value without flipping it. Each pickup adds two charges.
               </span>
             </li>
             <li className="how-to-play-list-item">
@@ -101,7 +109,10 @@ export default function HowToPlay() {
             </li>
             <li className="how-to-play-list-item">
               <strong>Mega Stone</strong>
-              <span>Your total score quadruples if the very first tile you flip for the level is a Voltorb.</span>
+              <span>
+                Your total score quadruples if the very first tile you flip for the level is a Voltorb. Reveal 3's automatic flip
+                doesn't count.
+              </span>
             </li>
           </ul>
         </div>
@@ -112,9 +123,8 @@ export default function HowToPlay() {
         <h3 className="how-to-play-section__title">Coins &amp; the Shop</h3>
         <div className="how-to-play-section__body">
           <p>
-            If you're <strong>logged in</strong>, your total score is converted into Coins whenever
-            a run ends (in Classic when you start a new run, and in Rogue when you lose or
-            reset). Head to the <strong>Shop</strong> to spend those Coins on new themes, which
+            If you're <strong>logged in</strong>, your score is converted into Coins: in Classic
+            each time you clear a board, and in Rogue when your run ends (when you lose, start a New Run, or leave the page). Head to the <strong>Shop</strong> to spend those Coins on new themes, which
             change your tile artwork and the site's colour scheme once equipped. Playing while logged out
             still works exactly the same, you just won't earn or spend any coins.
           </p>

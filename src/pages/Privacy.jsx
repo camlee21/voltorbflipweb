@@ -1,11 +1,15 @@
 
-import { Link } from 'react-router-dom'
+import PageMeta from '../components/PageMeta'
 import "./Privacy.css";
 
 export default function Privacy() {
   return (
     <main className="static-page">
-      {/* <Link to="/" className="back-btn static-page-back">← Back to Home</Link> */}
+      <PageMeta
+        title="Privacy Policy | Voltorb Flip"
+        description="What personal data Voltorb Flip collects when you sign in, why it's collected, and how it's used."
+        path="/privacy"
+      />
       <h2 className="static-page-title">Privacy Policy</h2>
 
       <div className="game-description" style={{ textAlign: 'left', maxWidth: '640px', margin: '0 auto' }}>

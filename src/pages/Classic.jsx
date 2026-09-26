@@ -1,24 +1,25 @@
-import { useEffect, useRef, useState } from "react";
-import Tile from "../components/Tile";
-import Counter from "../components/Counter";
-import { suppressBoardContextMenu } from "../utils/boardContextMenu";
+import { useState } from "react";
+import Board from "../components/Board";
+import NoteToggle from "../components/NoteToggle";
+import CoinToast from "../components/CoinToast";
 import {
-  getRandomPatternForLevel,
-  buildGrid,
-  rowStats,
-  columnStats,
+  buildLevel,
+  revealTile,
+  toggleTileNote,
   revealBoard,
-  levelOptions,
+  classicLevelAfterLoss,
+  classicLevelAfterWin,
+  MAX_LEVEL,
 } from "../game/gameLogic";
 import "./FreePlayGame.css"; // shares the board/tile/panel look with Free Play
 import "./Classic.css";
 
-import { useAuthContext } from "../contexts/AuthContext";
-import { useWalletContext } from "../contexts/WalletContext";
+import { useAuthContext } from "../contexts/useAuthContext";
+import { useWalletContext } from "../contexts/useWalletContext";
 import { useEquippedTheme } from "../utils/useEquippedTheme";
-
-const VOLTORB_ICON = "/sprites/counters/voltorb-count-icon.png";
-const STAGGER_MS = 90;
+import { useTimeouts } from "../hooks/useTimeouts";
+import { useConfirmArm } from "../hooks/useConfirmArm";
+import { useCoinToast } from "../hooks/useCoinToast";
 
 // Timing for the automatic loss sequence
 const REVEAL_DELAY_MS = 500;
@@ -27,18 +28,6 @@ const MESSAGE_HOLD_MS = 2200;
 
 // Timing for the automatic win sequence
 const WIN_HOLD_MS = 2500;
-
-// How long the "You have earned X coins!" toast stays visible
-const COIN_NOTIF_MS = 3000;
-
-// The highest level with a defined pattern pool — beating it loops back
-// instead of advancing to an undefined level.
-const MAX_LEVEL = levelOptions.length;
-
-function buildLevel(levelNumber) {
-  const pattern = getRandomPatternForLevel(levelNumber);
-  return buildGrid(pattern); // { grid, maxScore }
-}
 
 function getMessageTone(msg) {
   if (!msg) return "";
@@ -53,103 +42,101 @@ export default function Classic() {
 
   const [equippedTheme] = useEquippedTheme();
 
-  // Mobile-only: when on, tapping a tile notes it instead of flipping it.
+  // When on, tapping a tile notes it instead of flipping it.
   // Long-press-to-note (see Tile.jsx) still works independently either way.
   const [noteMode, setNoteMode] = useState(false);
 
   const [level, setLevel] = useState(1);
   const [score, setScore] = useState(1);
   const [totalScore, setTotalScore] = useState(0);
-  const [grid, setGrid] = useState([]);
-  const [maxScore, setMaxScore] = useState(1);
+  const [board, setBoard] = useState(() => buildLevel(1));
+  const { grid, maxScore } = board;
   const [gameOver, setGameOver] = useState(false);
   const [message, setMessage] = useState("");
 
+  // Tiles flipped this level (Voltorbs don't count) — decides demotion on a loss.
   const [flipCount, setFlipCount] = useState(0);
+  // Consecutive clears with at least JUMP_MIN_FLIPS flips — five in a row jumps to level 8.
+  const [winStreak, setWinStreak] = useState(0);
 
-  const [origin, setOrigin] = useState(null);
   const [revealing, setRevealing] = useState(false);
-
   const [awaitingNextLevel, setAwaitingNextLevel] = useState(false);
 
-  const [showGameOverPopup, setShowGameOverPopup] = useState(false);
-  const [pendingAction, setPendingAction] = useState(null);
-  const resetBtnRef = useRef(null);
+  const [pendingAction, confirm] = useConfirmArm();
+  const [coinToast, showCoinToast] = useCoinToast();
+  const { schedule, clearAll } = useTimeouts();
 
-  const [coinNotification, setCoinNotification] = useState(null);
-  const coinNotifTimeoutRef = useRef(null);
-
-  const timeoutsRef = useRef([]);
-
-  function clearPendingTimeouts() {
-    timeoutsRef.current.forEach(clearTimeout);
-    timeoutsRef.current = [];
-  }
-
-  function showCoinNotification(amount) {
-    setCoinNotification(amount);
-    if (coinNotifTimeoutRef.current) clearTimeout(coinNotifTimeoutRef.current);
-    coinNotifTimeoutRef.current = setTimeout(() => {
-      setCoinNotification(null);
-      coinNotifTimeoutRef.current = null;
-    }, COIN_NOTIF_MS);
-  }
-
-  useEffect(() => {
-    startNewLevel(1);
-    return () => {
-      clearPendingTimeouts();
-      if (coinNotifTimeoutRef.current) clearTimeout(coinNotifTimeoutRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (!pendingAction) return;
-    function handleWindowClick(e) {
-      if (resetBtnRef.current && !resetBtnRef.current.contains(e.target)) {
-        setPendingAction(null);
-      }
-    }
-    window.addEventListener("click", handleWindowClick);
-    return () => window.removeEventListener("click", handleWindowClick);
-  }, [pendingAction]);
-
-
-  useEffect(() => {
-    if (grid.length === 0) return;
-    if (gameOver || awaitingNextLevel) return;
-    if (score !== maxScore) return;
-
-    const beatMaxLevel = level >= MAX_LEVEL;
-
-    setMessage(beatMaxLevel ? `Well done, you beat Level ${MAX_LEVEL}!` : "Level beaten!");
-    setOrigin(null); // no clicked tile to ripple from — use the diagonal wave
-    setGrid((g) => revealBoard(g));
-    setRevealing(true);
-    setAwaitingNextLevel(true);
-
-    const winTimeout = setTimeout(() => {
-      const nextLevel = beatMaxLevel ? MAX_LEVEL : level + 1;
-      setTotalScore((t) => t + score);
-      setLevel(nextLevel);
-      startNewLevel(nextLevel);
-      setMessage("");
-    }, WIN_HOLD_MS);
-
-    timeoutsRef.current.push(winTimeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [score, maxScore, gameOver, awaitingNextLevel, grid.length]);
+  const setGrid = (update) => setBoard((b) => ({ ...b, grid: update(b.grid) }));
 
   function startNewLevel(levelNumber) {
-    const { grid: newGrid, maxScore: newMax } = buildLevel(levelNumber);
-    setGrid(newGrid);
-    setMaxScore(newMax);
+    clearAll();
+    setBoard(buildLevel(levelNumber));
     setScore(1);
     setFlipCount(0);
-    setOrigin(null);
     setRevealing(false);
     setAwaitingNextLevel(false);
+  }
+
+  // Each cleared level's score is banked as coins straight away, so leaving
+  // the page mid-run never loses anything already won.
+  function bankCoins(amount) {
+    if (!user || amount <= 0) return;
+    addCoins(amount);
+    showCoinToast(amount);
+  }
+
+  function winLevel(levelScore, flips) {
+    const next = classicLevelAfterWin(level, flips, winStreak);
+    const jumped = next.level === MAX_LEVEL && level + 1 < MAX_LEVEL;
+
+    setWinStreak(next.streak);
+    setMessage(
+      level >= MAX_LEVEL
+        ? `Well done, you beat Level ${MAX_LEVEL}!`
+        : jumped
+          ? `Level beaten! Five big clears in a row — jumping to level ${MAX_LEVEL}!`
+          : "Level beaten!"
+    );
+    setGrid(revealBoard);
+    setRevealing(true);
+    setAwaitingNextLevel(true);
+    setTotalScore((t) => t + levelScore);
+    bankCoins(levelScore);
+
+    schedule(() => {
+      setLevel(next.level);
+      setMessage("");
+      startNewLevel(next.level);
+    }, WIN_HOLD_MS);
+  }
+
+  function loseLevel(row, col) {
+    const nextLevel = classicLevelAfterLoss(level, flipCount);
+
+    setGrid((g) => revealTile(g, row, col));
+    setGameOver(true);
+    setWinStreak(0);
+    setMessage("Oops! You lost!");
+
+    schedule(() => {
+      setGrid(revealBoard);
+      setRevealing(true);
+
+      schedule(() => {
+        setMessage(
+          nextLevel < level
+            ? `You've been pushed back to level ${nextLevel}!`
+            : `You're still on level ${level}.`
+        );
+
+        schedule(() => {
+          setLevel(nextLevel);
+          setGameOver(false);
+          setMessage("");
+          startNewLevel(nextLevel);
+        }, MESSAGE_HOLD_MS);
+      }, REVEAL_HOLD_MS);
+    }, REVEAL_DELAY_MS);
   }
 
   function handleFlip(row, col) {
@@ -157,197 +144,57 @@ export default function Classic() {
     const tile = grid[row][col];
     if (tile.revealed) return;
 
-    const value = tile.value;
-
-    if (value !== 0) {
-      const newGrid = grid.map((r) => r.map((t) => ({ ...t })));
-      newGrid[row][col].revealed = true;
-      newGrid[row][col].noted = false;
-      setGrid(newGrid);
-      setScore((s) => s * value);
-      setFlipCount((c) => c + 1);
+    if (tile.value === 0) {
+      loseLevel(row, col);
       return;
     }
-    
-    const flipsBeforeLoss = flipCount;
 
-    const newGrid = grid.map((r) => r.map((t) => ({ ...t })));
-    newGrid[row][col].revealed = true;
-    setGrid(newGrid);
-    setGameOver(true);
-    setMessage("Oops! You lost!");
-    setOrigin({ row, col });
-
-    const revealTimeout = setTimeout(() => {
-      setGrid(revealBoard(newGrid));
-      setRevealing(true);
-      //   setShowGameOverPopup(true);
-
-      const messageTimeout = setTimeout(() => {
-        const nextLevel = flipsBeforeLoss < level ? Math.max(1, flipsBeforeLoss) : level;
-
-        setMessage(
-          nextLevel < level
-            ? `You've been pushed back to level ${nextLevel}!`
-            : `You're still on level ${level}.`
-        );
-
-        const advanceTimeout = setTimeout(() => {
-          setLevel(nextLevel);
-          setGameOver(false);
-          setMessage("");
-          startNewLevel(nextLevel);
-        }, MESSAGE_HOLD_MS);
-
-        timeoutsRef.current.push(advanceTimeout);
-      }, REVEAL_HOLD_MS);
-
-      timeoutsRef.current.push(messageTimeout);
-    }, REVEAL_DELAY_MS);
-
-    timeoutsRef.current.push(revealTimeout);
+    const newScore = score * tile.value;
+    const flips = flipCount + 1;
+    setGrid((g) => revealTile(g, row, col));
+    setScore(newScore);
+    setFlipCount(flips);
+    if (newScore === maxScore) winLevel(newScore, flips);
   }
 
-  function toggleNote(row, col) {
+  function handleNote(row, col) {
     if (gameOver || awaitingNextLevel) return;
-    const tile = grid[row][col];
-    if (tile.revealed) return;
-    const newGrid = grid.map((r) => r.map((t) => ({ ...t })));
-    newGrid[row][col].noted = !newGrid[row][col].noted;
-    setGrid(newGrid);
+    setGrid((g) => toggleTileNote(g, row, col));
   }
 
   function handleTileFlip(row, col) {
-    if (noteMode) {
-      toggleNote(row, col);
-      return;
-    }
-    handleFlip(row, col);
+    if (noteMode) handleNote(row, col);
+    else handleFlip(row, col);
   }
 
   function handleNewRun() {
-    clearPendingTimeouts();
-
-    // Bank whatever total score was built up before wiping it out.
-    if (totalScore > 0) {
-      if (user) addCoins(totalScore);
-      if (user) showCoinNotification(totalScore);
-    }
-
     setLevel(1);
     setTotalScore(0);
+    setWinStreak(0);
     setGameOver(false);
-    setShowGameOverPopup(false);
     setMessage("");
     startNewLevel(1);
   }
 
-  function handleDangerClick() {
-    if (pendingAction === "reset") {
-      setPendingAction(null);
-      handleNewRun();
-      return;
-    }
-    setPendingAction("reset");
-  }
-
-  function flipDelayFor(row, col, tile) {
-    if (!revealing || !tile.revealed) return 0;
-    return col * STAGGER_MS;
-  }
-
-  if (grid.length === 0) {
-    return (
-      <div className="free-play-page">
-        <p className="loading-text">Loading…</p>
-      </div>
-    );
-  }
-
   return (
-    <div
-      className="free-play-page classic-page"
-    >
-      {coinNotification !== null && (
-        <div
-          role="status"
-          style={{
-            position: "fixed",
-            top: "20px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 1000,
-            padding: "10px 18px",
-            borderRadius: "10px",
-            background: "rgba(20, 160, 90, 0.95)",
-            color: "#fff",
-            fontWeight: 600,
-            fontSize: "14px",
-            boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
-            animation: "coin-toast-fade 3s ease forwards",
-          }}
-        >
-          You have earned {coinNotification.toLocaleString()} coins!
-        </div>
-      )}
-      <style>{`
-        @keyframes coin-toast-fade {
-          0% { opacity: 0; transform: translate(-50%, -8px); }
-          10% { opacity: 1; transform: translate(-50%, 0); }
-          85% { opacity: 1; transform: translate(-50%, 0); }
-          100% { opacity: 0; transform: translate(-50%, -8px); }
-        }
-      `}</style>
+    <div className="free-play-page classic-page">
+      <CoinToast amount={coinToast} />
 
-      <main className="layout">
+      <div className="layout">
         <section className="board-panel" aria-label="Classic board">
-          <div
-            className="board"
-            style={{ "--tile-size": "clamp(40px, 12vw, 80px)" }}
-            onContextMenu={suppressBoardContextMenu}
-          >
-            {grid.map((row, r) => (
-              <div key={r} style={{ display: "contents" }}>
-                {row.map((tile, c) => (
-                  <Tile
-                    key={tile.id}
-                    tile={tile}
-                    theme={equippedTheme}
-                    disabled={gameOver || awaitingNextLevel}
-                    onFlip={() => handleTileFlip(r, c)}
-                    onNote={() => toggleNote(r, c)}
-                    flipDelay={flipDelayFor(r, c, tile)}
-                  />
-                ))}
-                {(() => {
-                  const stats = rowStats(grid, r);
-                  return <Counter points={stats.points} voltorbs={stats.voltorbs} icon={VOLTORB_ICON} />;
-                })()}
-              </div>
-            ))}
-
-            {[0, 1, 2, 3, 4].map((c) => {
-              const stats = columnStats(grid, c);
-              return <Counter key={`col-${c}`} points={stats.points} voltorbs={stats.voltorbs} icon={VOLTORB_ICON} />;
-            })}
-            <div />
-          </div>
+          <Board
+            grid={grid}
+            theme={equippedTheme}
+            disabled={gameOver || awaitingNextLevel}
+            revealing={revealing}
+            onFlip={handleTileFlip}
+            onNote={handleNote}
+            label="Classic board tiles"
+          />
 
           <p className="hint">Right-click (or long-press on mobile) a tile to note it.</p>
 
-          <div className="note-toggle">
-            <span className="note-toggle__label">Note Mode</span>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={noteMode}
-              aria-label="Toggle note mode"
-              className={`note-toggle__switch ${noteMode ? "is-on" : ""}`}
-              onClick={() => setNoteMode((v) => !v)}
-            >
-              <span className="note-toggle__knob" />
-            </button>
-          </div>
+          <NoteToggle on={noteMode} onChange={setNoteMode} />
         </section>
 
         <aside className="sidebar">
@@ -359,7 +206,8 @@ export default function Classic() {
           <div className="classic-scores">
             <div className="scoreboard">
               <span className="scoreboard__label">Lvl. Score</span>
-              <span className="scoreboard__value">{score}</span>
+              {/* HGSS shows 0 until the first flip; score is a running product, so it starts at 1. */}
+              <span className="scoreboard__value">{flipCount === 0 ? 0 : score}</span>
             </div>
             <div className="scoreboard">
               <span className="scoreboard__label">Total</span>
@@ -367,34 +215,24 @@ export default function Classic() {
             </div>
           </div>
 
-          {message && <p className={`message ${getMessageTone(message)}`}>{message}</p>}
+          {message && (
+            <p className={`message ${getMessageTone(message)}`} role="status">
+              {message}
+            </p>
+          )}
 
           <div className="sidebar__actions">
             <button
-              ref={resetBtnRef}
               type="button"
+              data-confirm="reset"
               className={`btn btn--ghost ${pendingAction === "reset" ? "armed" : ""}`}
-              onClick={handleDangerClick}
+              onClick={() => confirm("reset", handleNewRun)}
             >
               New Run
             </button>
           </div>
         </aside>
-      </main>
-
-      {showGameOverPopup && (
-        <div className="classic-popup-overlay">
-          <div className="classic-popup">
-            <h2 className="classic-popup__title">Run over!</h2>
-            <p className="classic-popup__subtitle">
-              You reached level {level} with a total score of {totalScore}.
-            </p>
-            <button type="button" className="btn btn--primary classic-popup__cta" onClick={handleNewRun}>
-              Start New Run
-            </button>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

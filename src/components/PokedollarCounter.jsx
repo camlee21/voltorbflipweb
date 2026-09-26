@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { useAuthContext } from "../contexts/AuthContext";
-import { useWalletContext } from "../contexts/WalletContext";
+import { useAuthContext } from "../contexts/useAuthContext";
+import { useWalletContext } from "../contexts/useWalletContext";
 
 function formatPokedollars(amount) {
   const sign = amount < 0 ? "-" : "";

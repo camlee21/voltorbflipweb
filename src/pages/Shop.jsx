@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { THEMES } from "../game/themes";
-import { useAuthContext } from "../contexts/AuthContext";
-import { useWalletContext } from "../contexts/WalletContext";
+import { useAuthContext } from "../contexts/useAuthContext";
+import { useWalletContext } from "../contexts/useWalletContext";
 import { useEquippedTheme } from "../utils/useEquippedTheme";
+import PageMeta from "../components/PageMeta";
 import "./Shop.css";
 
 const TILE_VALUES = [0, 1, 2, 3];
@@ -48,7 +49,12 @@ export default function Shop() {
   }
 
   return (
-    <div className="shop-page">
+    <main className="shop-page">
+      <PageMeta
+        title="Theme Shop | Voltorb Flip"
+        description="Spend the Coins you win playing Voltorb Flip on Pokémon-inspired themes for the tiles and site colours."
+        path="/shop"
+      />
       <h1 className="shop-title">Shop</h1>
       <p className="shop-subtitle">
         {user
@@ -129,6 +135,6 @@ export default function Shop() {
           );
         })}
       </div>
-    </div>
+    </main>
   );
 }

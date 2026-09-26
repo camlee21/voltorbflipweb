@@ -6,10 +6,11 @@ export function useAuth() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => setUser(session?.user ?? null))
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false))
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
@@ -17,16 +18,6 @@ export function useAuth() {
 
     return () => subscription.unsubscribe()
   }, [])
-
-  async function signInWithEmail(email, password) {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    return { error }
-  }
-
-  async function signUpWithEmail(email, password) {
-    const { error } = await supabase.auth.signUp({ email, password })
-    return { error }
-  }
 
   async function signOut() {
     await supabase.auth.signOut()
@@ -40,5 +31,5 @@ export function useAuth() {
     })
   }
 
-  return { user, loading, signInWithEmail, signUpWithEmail, signOut, signInWithGoogle }
+  return { user, loading, signOut, signInWithGoogle }
 }

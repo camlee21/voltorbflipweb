@@ -1,97 +1,69 @@
 import { useEffect, useRef, useState } from "react";
 
-import Tile from "../components/Tile";
-import Counter from "../components/Counter";
-import { suppressBoardContextMenu } from "../utils/boardContextMenu";
+import Board from "../components/Board";
+import NoteToggle from "../components/NoteToggle";
+import CoinToast from "../components/CoinToast";
+import Modal from "../components/Modal";
 
 import {
-  getRandomPatternForLevel,
-  buildGrid,
-  rowStats,
-  columnStats,
+  buildLevel,
+  revealTile,
+  hideTile,
+  toggleTileNote,
   revealBoard,
-  levelOptions,
+  diagonalStats,
+  MAX_LEVEL,
 } from "../game/gameLogic";
+import {
+  POWERS,
+  randomPower,
+  takePower,
+  spendCharge,
+  pickReveal3Target,
+  bankedLevelScore,
+  bonusScore,
+  noOnesPenalty,
+} from "../game/rogueLogic";
 
-import { useAuthContext } from "../contexts/AuthContext";
-import { useWalletContext } from "../contexts/WalletContext";
+import { useAuthContext } from "../contexts/useAuthContext";
+import { useWalletContext } from "../contexts/useWalletContext";
 import { useEquippedTheme } from "../utils/useEquippedTheme";
+import { useTimeouts } from "../hooks/useTimeouts";
+import { useConfirmArm } from "../hooks/useConfirmArm";
+import { useCoinToast } from "../hooks/useCoinToast";
 
 import "./FreePlayGame.css";
 import "./RogueGame.css";
 
-const VOLTORB_ICON = "/sprites/counters/voltorb-count-icon.png";
-const STAGGER_MS = 90;
-
-// How long the "You have earned X coins!" toast stays visible.
-const COIN_NOTIF_MS = 3000;
-
-// The highest level with a defined pattern pool — beating it loops back
-// instead of advancing to an undefined level.
-const MAX_LEVEL = levelOptions.length;
-
 // How long the max-level "well done" message stays up before looping back.
 const MAX_LEVEL_HOLD_MS = 2500;
+// How long a Peek shows a tile.
+const PEEK_MS = 1000;
+// Delay before the whole board flips up after a loss.
+const LOSS_REVEAL_MS = 500;
 
-const POWERS = {
-  Protect: {
-    icon: "/sprites/powers/protect.png",
-    desc: "Survive a Voltorb instead of losing. This power can stack.",
-  },
-  "Corner Count": {
-    icon: "/sprites/powers/corner-count.png",
-    desc: "Reveals the stat counter for the main diagonal.",
-    },
-  "Money Multiplier": {
-    icon: "/sprites/powers/money-multiplier.png",
-    desc: "Doubles the bonus score offered when you level up.",
-  },
-  "Reveal 3": {
-    icon: "/sprites/powers/reveal-3.png",
-    desc: "Automatically flips a 3 tile (or a 2, if no 3 is on the board) at the start of each level.",
-  },
-  Peek: {
-    icon: "/sprites/powers/peek.png",
-    desc: "Reveal a tile for a second without flipping it. This power stacks, each copy adding two charges.",
-  },
-  "No Ones": {
-    icon: "/sprites/powers/no-ones.png",
-    desc: "Flipping a 1 costs you 10% of your total score — but your banked score doubles each level.",
-  },
-  "Mega Stone": {
-    icon: "/sprites/powers/mega-stone.png",
-    desc: "Your score quadruples if the first tile you flip for the level is a Voltorb.",
-  },
-};
-const ALL_POWER_NAMES = Object.keys(POWERS);
-
-function randomPower(currentPowers) {
-  const available = ALL_POWER_NAMES.filter((p) => !currentPowers.includes(p));
-  const pool = available.length > 0 ? available : ALL_POWER_NAMES;
-  return pool[Math.floor(Math.random() * pool.length)];
-}
-
-function buildLevel(levelNumber) {
-  const pattern = getRandomPatternForLevel(levelNumber);
-  return buildGrid(pattern); // { grid, maxScore }
-}
-
-function diagonalStats(grid) {
-  let voltorbs = 0;
-  let points = 0;
-  for (let i = 0; i < 5; i++) {
-    const tile = grid[i][i];
-    if (tile.value === 0) voltorbs += 1;
-    else points += tile.value;
-  }
-  return { voltorbs, points };
-}
+const NO_POWERS = { powers: [], charges: {} };
 
 function getMessageTone(msg) {
   if (!msg) return "";
-  if (msg.includes("beaten") || msg.includes("Protected") || msg.includes("Mega") || msg.includes("Well done")) return "message--success";
+  if (msg.includes("beaten") || msg.includes("Protect") || msg.includes("Mega") || msg.includes("Well done")) return "message--success";
   if (msg.includes("lost") || msg.includes("reset")) return "message--error";
   return "message--neutral";
+}
+
+// Builds a level's board, applying Reveal 3's automatic flip.
+// Returns { board, score }.
+function setUpLevel(levelNumber, powers) {
+  let { grid, maxScore } = buildLevel(levelNumber);
+  let score = 1;
+  if (powers.includes("Reveal 3")) {
+    const target = pickReveal3Target(grid);
+    if (target) {
+      grid = revealTile(grid, target.row, target.col);
+      score = grid[target.row][target.col].value;
+    }
+  }
+  return { board: { grid, maxScore }, score };
 }
 
 export default function RogueGame() {
@@ -99,436 +71,252 @@ export default function RogueGame() {
   const { addCoins } = useWalletContext();
 
   // The player's currently-equipped board theme (defaults to "classic").
-  // Tile sprite paths (`/sprites/${value}_${theme}.png`) key off this.
   const [equippedTheme] = useEquippedTheme();
 
-  // Mobile-only: when on, tapping a tile notes it instead of flipping it
-  // (and takes priority over an armed Peek — see note in handleTileFlip).
-  // Long-press-to-note (see Tile.jsx) still works independently either way.
+  // When on, tapping a tile notes it instead of flipping it (and takes
+  // priority over an armed Peek). Long-press-to-note (see Tile.jsx) still
+  // works independently either way.
   const [noteMode, setNoteMode] = useState(false);
 
+  const [initial] = useState(() => setUpLevel(1, []));
   const [level, setLevel] = useState(1);
-  const [score, setScore] = useState(1);
+  const [score, setScore] = useState(initial.score);
   const [totalScore, setTotalScore] = useState(0);
-  const [grid, setGrid] = useState([]);
-  const [maxScore, setMaxScore] = useState(1);
+  const [board, setBoard] = useState(initial.board);
+  const { grid, maxScore } = board;
   const [gameOver, setGameOver] = useState(false);
   const [message, setMessage] = useState("");
 
-  const [currentPowers, setCurrentPowers] = useState([]);
-  const [numProtects, setNumProtects] = useState(0);
-  const [numPeeks, setNumPeeks] = useState(0);
+  // Owned powers (each listed once) and charges for the stackable ones.
+  const [kit, setKit] = useState(NO_POWERS);
+  const { powers, charges } = kit;
   const [peekArmed, setPeekArmed] = useState(false);
   const [infoPower, setInfoPower] = useState(null);
+  // The power offered on level-up; non-null while the reward popup is open.
+  const [rewardChoice, setRewardChoice] = useState(null);
+  // Holding the "beat level 8" message before looping back.
+  const [awaitingMaxLevel, setAwaitingMaxLevel] = useState(false);
+  // Whether a tile has been flipped this level (Mega Stone only works on the first).
+  // Reveal 3's automatic flip doesn't count.
+  const [firstFlipDone, setFirstFlipDone] = useState(false);
 
-  const [showRewardPopup, setShowRewardPopup] = useState(false);
-  const [showGameOverPopup, setShowGameOverPopup] = useState(false);
-  const [rewardChoice, setRewardChoice] = useState(null); // power offered this level-up
-  const [awaitingMaxLevel, setAwaitingMaxLevel] = useState(false); // holding the "beat level 8" message before looping back
-
-  // "You have earned X coins!" toast — shown when a run ends in a loss and
-  // the final total score gets banked as coins.
-  const [coinNotification, setCoinNotification] = useState(null);
-  const coinNotifTimeoutRef = useRef(null);
-
-  // Gates the column-stagger animation so a normal single-tile flip (and
-  // tempFlip's Protect/Peek/Mega Stone peeks) stay instant.
+  // Gates the column-stagger animation so single-tile flips stay instant.
   const [revealing, setRevealing] = useState(false);
 
-  const [pendingAction, setPendingAction] = useState(null); // mirrors Free Play's confirm-arm reset
-  const resetBtnRef = useRef(null);
+  const [pendingAction, confirm] = useConfirmArm();
+  const [coinToast, showCoinToast] = useCoinToast();
+  const { schedule, clearAll } = useTimeouts();
 
-  const cornerCountOn = currentPowers.includes("Corner Count");
-  const protectOn = currentPowers.includes("Protect");
-  const noOnesOn = currentPowers.includes("No Ones");
-  const megaOn = currentPowers.includes("Mega Stone");
-  const moneyMultiplier = currentPowers.includes("Money Multiplier") ? 2 : 1;
-  const firstFlipRef = useRef(false);
+  const cornerCountOn = powers.includes("Corner Count");
+  const noOnesOn = powers.includes("No Ones");
+  const megaOn = powers.includes("Mega Stone");
+  const boardLocked = gameOver || rewardChoice !== null || awaitingMaxLevel;
 
-  function showCoinNotification(amount) {
-    setCoinNotification(amount);
-    if (coinNotifTimeoutRef.current) clearTimeout(coinNotifTimeoutRef.current);
-    coinNotifTimeoutRef.current = setTimeout(() => {
-      setCoinNotification(null);
-      coinNotifTimeoutRef.current = null;
-    }, COIN_NOTIF_MS);
+  const setGrid = (update) => setBoard((b) => ({ ...b, grid: update(b.grid) }));
+
+  // A run's total is banked as coins when it ends: on a loss, on New Run, or
+  // when the player leaves the page mid-run. `gameOver` means it's already banked.
+  function bankCoins(amount) {
+    if (!user || amount <= 0) return;
+    addCoins(amount);
+    showCoinToast(amount);
   }
 
+  const unbankedRef = useRef({ total: 0, addCoins: null });
   useEffect(() => {
-    startNewLevel(1, []);
-    return () => {
-      if (coinNotifTimeoutRef.current) clearTimeout(coinNotifTimeoutRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    unbankedRef.current = { total: gameOver || !user ? 0 : totalScore, addCoins };
+  });
+  useEffect(
+    () => () => {
+      const { total, addCoins: add } = unbankedRef.current;
+      if (total > 0) add(total);
+    },
+    []
+  );
 
-  useEffect(() => {
-    if (!pendingAction) return;
-    function handleWindowClick(e) {
-      if (resetBtnRef.current && !resetBtnRef.current.contains(e.target)) {
-        setPendingAction(null);
-      }
-    }
-    window.addEventListener("click", handleWindowClick);
-    return () => window.removeEventListener("click", handleWindowClick);
-  }, [pendingAction]);
+  function startNewLevel(levelNumber, ownedPowers) {
+    clearAll();
+    const next = setUpLevel(levelNumber, ownedPowers);
+    setBoard(next.board);
+    setScore(next.score);
+    setFirstFlipDone(false);
+    setRevealing(false);
+    setPeekArmed(false);
+  }
 
-  // Fires automatically the instant every 2 and 3 has been flipped
-  // (score === maxScore), replacing the old manual Submit button. The
-  // reward popup that follows requires the player to click a choice, which
-  // is what gives them time to register the win before the next level loads
-  // — no extra timer needed here, unlike Classic mode.
-  useEffect(() => {
-    if (grid.length === 0) return;
-    if (gameOver || showRewardPopup || awaitingMaxLevel) return;
-    if (score !== maxScore) return;
-
+  function winLevel(levelScore) {
     if (level >= MAX_LEVEL) {
       // No further pattern pool to advance into — bank the score like a
       // normal level-up, show a one-off message, then loop back to MAX_LEVEL.
       setMessage(`Well done, you beat Level ${MAX_LEVEL}!`);
       setAwaitingMaxLevel(true);
-      const scoreMult = noOnesOn ? 2 : 1;
-      setTotalScore((t) => t + score * scoreMult);
-
-      setTimeout(() => {
+      setTotalScore((t) => t + bankedLevelScore(levelScore, powers));
+      schedule(() => {
         setMessage("");
         setAwaitingMaxLevel(false);
-        startNewLevel(MAX_LEVEL, currentPowers);
+        startNewLevel(MAX_LEVEL, powers);
       }, MAX_LEVEL_HOLD_MS);
       return;
     }
 
+    // The reward popup waits for a click, which gives the player time to
+    // register the win before the next level loads.
     setMessage("Level beaten!");
-    setRewardChoice(randomPower(currentPowers));
-    setShowRewardPopup(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [score, maxScore, gameOver, showRewardPopup, awaitingMaxLevel, grid.length]);
+    setRewardChoice(randomPower(powers));
+  }
 
-  function startNewLevel(levelNumber, powers) {
-    const { grid: newGrid, maxScore: newMax } = buildLevel(levelNumber);
-    let workingGrid = newGrid;
-    let startScore = 1;
-    firstFlipRef.current = false;
-    setRevealing(false);
+  function loseRun(row, col) {
+    clearAll(); // e.g. a Peek still waiting to flip back
+    setGrid((g) => revealTile(g, row, col));
+    setGameOver(true);
+    setMessage("Oops! You lost!");
+    // The level's score is lost with the run; the total so far is banked.
+    bankCoins(totalScore);
+    schedule(() => {
+      setGrid(revealBoard);
+      setRevealing(true);
+    }, LOSS_REVEAL_MS);
+  }
 
-    if (powers.includes("Reveal 3")) {
-        const flat = [];
-        workingGrid.forEach((row, r) => row.forEach((tile, c) => flat.push({ r, c, tile })));
-        const target =
-        flat.find((t) => t.tile.value === 3 && !t.tile.revealed) ||
-        flat.find((t) => t.tile.value === 2 && !t.tile.revealed);
-        if (target) {
-        workingGrid = workingGrid.map((row) => row.map((t) => ({ ...t })));
-        workingGrid[target.r][target.c].revealed = true;
-        startScore *= target.tile.value;
-        firstFlipRef.current = true; // this auto-reveal counts as the level's first flip
-        if (powers.includes("Mega Stone")) {
-            setCurrentPowers((p) => p.filter((x) => x !== "Mega Stone"));
-        }
-        }
-    }
-
-    setGrid(workingGrid);
-    setMaxScore(newMax);
-    setScore(startScore);
-    }
-
-  function tempFlip(row, col) {
-    setGrid((g) => {
-      const next = g.map((r) => r.map((t) => ({ ...t })));
-      next[row][col].revealed = true;
-      return next;
-    });
-    setTimeout(() => {
-      setGrid((g) => {
-        const next = g.map((r) => r.map((t) => ({ ...t })));
-        next[row][col].revealed = false;
-        return next;
-      });
-    }, 1000);
+  function peek(row, col) {
+    setGrid((g) => revealTile(g, row, col));
+    setPeekArmed(false);
+    setKit((k) => spendCharge(k.powers, k.charges, "Peek"));
+    schedule(() => setGrid((g) => hideTile(g, row, col)), PEEK_MS);
   }
 
   function handleFlip(row, col) {
-    if (gameOver || showRewardPopup || awaitingMaxLevel) return;
+    if (boardLocked) return;
     const tile = grid[row][col];
     if (tile.revealed) return;
 
     if (peekArmed) {
-        tempFlip(row, col);
-        setPeekArmed(false);
-        setNumPeeks((n) => {
-        const next = n - 1;
-        if (next <= 0) {
-            setCurrentPowers((p) => p.filter((x) => x !== "Peek"));
-            return 0;
-        }
-        return next;
-        });
-        return; // peeking doesn't count as "the first flip"
+      peek(row, col); // peeking doesn't count as "the first flip"
+      return;
     }
 
-    const value = tile.value;
-    const isFirstFlip = !firstFlipRef.current;
-    firstFlipRef.current = true;
-
-    if (value !== 0) {
-        const newGrid = grid.map((r) => r.map((t) => ({ ...t })));
-        newGrid[row][col].revealed = true;
-        newGrid[row][col].noted = false;
-        setGrid(newGrid);
-
-        if (value === 1 && noOnesOn) {
-        setTotalScore((t) => Math.round(t - t * 0.1));
-        }
-        setScore((s) => s * value);
-
-        // Mega Stone only survives if a Voltorb is the very first tile flipped.
-        if (megaOn && isFirstFlip) {
-        setCurrentPowers((p) => p.filter((x) => x !== "Mega Stone"));
-        }
-        return;
-    }
-
-    // Hit a Voltorb.
+    const isFirstFlip = !firstFlipDone;
+    setFirstFlipDone(true);
+    // Mega Stone only survives if a Voltorb is the very first tile flipped.
     if (megaOn && isFirstFlip) {
-        tempFlip(row, col);
-        setTotalScore((t) => t * 4);
-        setCurrentPowers((p) => p.filter((x) => x !== "Mega Stone"));
-        setMessage("Your Mega Stone shattered the Voltorb - total score x4!");
-        return;
+      setKit((k) => ({ ...k, powers: k.powers.filter((p) => p !== "Mega Stone") }));
     }
 
-    if (protectOn) {
-        tempFlip(row, col);
-        setNumProtects((n) => {
-        const next = n - 1;
-        if (next <= 0) {
-            setCurrentPowers((p) => p.filter((x) => x !== "Protect"));
-            return 0;
-        }
-        return next;
-        });
-        setMessage("You use Protect! You survive the Voltorb hit.");
-        return;
+    if (tile.value !== 0) {
+      setGrid((g) => revealTile(g, row, col));
+      if (tile.value === 1 && noOnesOn) setTotalScore(noOnesPenalty);
+      const newScore = score * tile.value;
+      setScore(newScore);
+      if (newScore === maxScore) winLevel(newScore);
+      return;
+    }
+
+    // Hit a Voltorb. A saved Voltorb stays face-up so it can't be flipped again.
+    if (megaOn && isFirstFlip) {
+      setGrid((g) => revealTile(g, row, col));
+      setTotalScore((t) => t * 4);
+      setMessage("Your Mega Stone shattered the Voltorb - total score x4!");
+      return;
+    }
+
+    if ((charges.Protect ?? 0) > 0) {
+      setGrid((g) => revealTile(g, row, col));
+      setKit((k) => spendCharge(k.powers, k.charges, "Protect"));
+      setMessage("You use Protect! You survive the Voltorb hit.");
+      return;
     }
 
     // No Protect left, no Mega Stone save - the run ends here.
-    const newGrid = grid.map((r) => r.map((t) => ({ ...t })));
-    newGrid[row][col].revealed = true;
-    setGrid(newGrid);
-    setGameOver(true);
-    setMessage("Oops! You lost!");
-    setTimeout(() => {
-        setGrid(revealBoard(newGrid));
-        setRevealing(true);
-        const scoreMult = noOnesOn ? 2 : 1;
-        const finalTotal = totalScore + score * scoreMult;
-        setTotalScore(finalTotal);
+    loseRun(row, col);
+  }
 
-        // Losing a run banks the final total score as coins.
-        if (finalTotal > 0) {
-          if (user) addCoins(finalTotal);
-          if (user) showCoinNotification(finalTotal);
-        }
-        // setShowGameOverPopup(true);
-    }, 500);
-    }
-
-  function toggleNote(row, col) {
-    if (gameOver || showRewardPopup || awaitingMaxLevel) return;
-    const tile = grid[row][col];
-    if (tile.revealed) return;
-    const newGrid = grid.map((r) => r.map((t) => ({ ...t })));
-    newGrid[row][col].noted = !newGrid[row][col].noted;
-    setGrid(newGrid);
+  function handleNote(row, col) {
+    if (boardLocked) return;
+    setGrid((g) => toggleTileNote(g, row, col));
   }
 
   function handleTileFlip(row, col) {
-    if (noteMode) {
-      toggleNote(row, col);
-      return;
-    }
-    handleFlip(row, col);
+    if (noteMode) handleNote(row, col);
+    else handleFlip(row, col);
   }
 
-  function applyLevelUp(updatedPowers) {
-    setShowRewardPopup(false);
+  function applyLevelUp(ownedPowers) {
+    setRewardChoice(null);
     const nextLevel = level + 1;
     setLevel(nextLevel);
     setMessage("");
-    startNewLevel(nextLevel, updatedPowers);
+    startNewLevel(nextLevel, ownedPowers);
   }
 
   function handleTakePower() {
-    const power = rewardChoice;
-    const updatedPowers = [...currentPowers, power];
-    setCurrentPowers(updatedPowers);
-    if (power === "Protect") setNumProtects((n) => n + 1);
-    if (power === "Peek") setNumPeeks((n) => n + 2);
-    const scoreMult = updatedPowers.includes("No Ones") ? 2 : 1;
-    setTotalScore((t) => t + score * scoreMult);
-    applyLevelUp(updatedPowers);
+    const next = takePower(powers, charges, rewardChoice);
+    setKit(next);
+    // Taking No Ones doubles this level's score straight away.
+    setTotalScore((t) => t + bankedLevelScore(score, next.powers));
+    applyLevelUp(next.powers);
   }
 
   function handleTakeBonusScore() {
-    const bonus = level * 50 * moneyMultiplier;
-    const scoreMult = noOnesOn ? 2 : 1;
-    setTotalScore((t) => t + score * scoreMult + bonus);
-    applyLevelUp(currentPowers);
+    setTotalScore((t) => t + bankedLevelScore(score, powers) + bonusScore(level, powers));
+    applyLevelUp(powers);
   }
 
   function handleNewRun() {
+    if (!gameOver) bankCoins(totalScore);
     setLevel(1);
     setTotalScore(0);
-    setCurrentPowers([]);
-    setNumProtects(0);
-    setNumPeeks(0);
-    setPeekArmed(false);
+    setKit(NO_POWERS);
     setGameOver(false);
-    setShowGameOverPopup(false);
-    setShowRewardPopup(false);
+    setRewardChoice(null);
+    setAwaitingMaxLevel(false);
     setMessage("");
     startNewLevel(1, []);
   }
 
-  function handleDangerClick() {
-    if (pendingAction === "reset") {
-      setPendingAction(null);
-      handleNewRun();
-      return;
-    }
-    setPendingAction("reset");
-  }
-
-  function flipDelayFor(col, tile) {
-    if (!revealing || !tile.revealed) return 0;
-    return col * STAGGER_MS;
-  }
-
-  if (grid.length === 0) {
-    return (
-      <div className="free-play-page">
-        <p className="loading-text">Loading…</p>
-      </div>
-    );
-  }
-
   return (
     <div className="free-play-page rogue-page">
-      {coinNotification !== null && (
-        <div
-          role="status"
-          style={{
-            position: "fixed",
-            top: "20px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 1000,
-            padding: "10px 18px",
-            borderRadius: "10px",
-            background: "rgba(20, 160, 90, 0.95)",
-            color: "#fff",
-            fontWeight: 600,
-            fontSize: "14px",
-            boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
-            animation: "coin-toast-fade 3s ease forwards",
-          }}
-        >
-          You have earned {coinNotification.toLocaleString()} coins!
-        </div>
-      )}
-      <style>{`
-        @keyframes coin-toast-fade {
-          0% { opacity: 0; transform: translate(-50%, -8px); }
-          10% { opacity: 1; transform: translate(-50%, 0); }
-          85% { opacity: 1; transform: translate(-50%, 0); }
-          100% { opacity: 0; transform: translate(-50%, -8px); }
-        }
-      `}</style>
+      <CoinToast amount={coinToast} />
 
-      <main className="layout">
+      <div className="layout">
         <section className="board-panel" aria-label="Rogue board">
           <div className="powers-bar" aria-label="Active powers">
             <span className="powers-bar__label">Powers</span>
             <div className="powers-bar__icons">
-              {currentPowers.length === 0 && (
+              {powers.length === 0 && (
                 <span className="powers-bar__empty">None yet - beat a level to pick one up.</span>
               )}
-              {currentPowers.map((power, i) => (
+              {powers.map((power) => (
                 <button
-                  key={`${power}-${i}`}
+                  key={power}
                   type="button"
                   className="power-icon"
                   onClick={() => setInfoPower(power)}
                   title={power}
                 >
                   <img src={POWERS[power].icon} alt={power} />
-                  {power === "Protect" && numProtects > 1 && (
-                    <span className="power-icon__badge">{numProtects}</span>
-                  )}
-                  {power === "Peek" && numPeeks > 1 && (
-                    <span className="power-icon__badge">{numPeeks}</span>
-                  )}
+                  {charges[power] > 1 && <span className="power-icon__badge">{charges[power]}</span>}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="board" style={{ "--tile-size": "clamp(40px, 12vw, 80px)" }} onContextMenu={suppressBoardContextMenu}>
-            {grid.map((row, r) => (
-              <div key={r} style={{ display: "contents" }}>
-                {row.map((tile, c) => (
-                  <Tile
-                    key={tile.id}
-                    tile={tile}
-                    theme={equippedTheme}
-                    disabled={gameOver || showRewardPopup || awaitingMaxLevel}
-                    onFlip={() => handleTileFlip(r, c)}
-                    onNote={() => toggleNote(r, c)}
-                    flipDelay={flipDelayFor(c, tile)}
-                  />
-                ))}
-                {(() => {
-                  const stats = rowStats(grid, r);
-                  return <Counter points={stats.points} voltorbs={stats.voltorbs} icon={VOLTORB_ICON} />;
-                })()}
-              </div>
-            ))}
-
-            {[0, 1, 2, 3, 4].map((c) => {
-              const stats = columnStats(grid, c);
-              return <Counter key={`col-${c}`} points={stats.points} voltorbs={stats.voltorbs} icon={VOLTORB_ICON} />;
-            })}
-
-            {cornerCountOn ? (
-              (() => {
-                const stats = diagonalStats(grid);
-                return <Counter points={stats.points} voltorbs={stats.voltorbs} icon={VOLTORB_ICON} />;
-              })()
-            ) : (
-              <div />
-            )}
-          </div>
+          <Board
+            grid={grid}
+            theme={equippedTheme}
+            disabled={boardLocked}
+            revealing={revealing}
+            onFlip={handleTileFlip}
+            onNote={handleNote}
+            cornerStats={cornerCountOn ? diagonalStats(grid) : null}
+            label="Rogue board tiles"
+          />
 
           <p className="hint">
             Right-click (or long-press on mobile) a tile to note it.
-            {currentPowers.includes("Peek") && " Click Peek below, then a tile, to look without flipping."}
+            {powers.includes("Peek") && " Click Peek below, then a tile, to look without flipping."}
           </p>
 
-          <div className="note-toggle">
-            <span className="note-toggle__label">Note Mode</span>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={noteMode}
-              aria-label="Toggle note mode"
-              className={`note-toggle__switch ${noteMode ? "is-on" : ""}`}
-              onClick={() => setNoteMode((v) => !v)}
-            >
-              <span className="note-toggle__knob" />
-            </button>
-          </div>
+          <NoteToggle on={noteMode} onChange={setNoteMode} />
         </section>
 
         <aside className="sidebar">
@@ -548,78 +336,73 @@ export default function RogueGame() {
             </div>
           </div>
 
-          {currentPowers.includes("Peek") && (
+          {powers.includes("Peek") && (
             <button
               type="button"
               className={`btn btn--ghost btn--peek ${peekArmed ? "armed-peek" : ""}`}
               onClick={() => setPeekArmed((a) => !a)}
-              disabled={gameOver || showRewardPopup || awaitingMaxLevel}
+              disabled={boardLocked}
+              aria-pressed={peekArmed}
             >
-              {peekArmed ? "Click a tile to peek…" : `Use Peek (${numPeeks} left)`}
+              {peekArmed ? "Click a tile to peek…" : `Use Peek (${charges.Peek ?? 0} left)`}
             </button>
           )}
 
-          {message && <p className={`message ${getMessageTone(message)}`}>{message}</p>}
+          {message && (
+            <p className={`message ${getMessageTone(message)}`} role="status">
+              {message}
+            </p>
+          )}
 
           <div className="sidebar__actions">
             <button
-              ref={resetBtnRef}
               type="button"
+              data-confirm="reset"
               className={`btn btn--ghost ${pendingAction === "reset" ? "armed" : ""}`}
-              onClick={handleDangerClick}
+              onClick={() => confirm("reset", handleNewRun)}
             >
               New Run
             </button>
           </div>
         </aside>
-      </main>
+      </div>
 
-      {showRewardPopup && (
-        <div className="rogue-popup-overlay">
-          <div className="rogue-popup">
-            <h2 className="rogue-popup__title">Level {level} beaten!</h2>
-            <p className="rogue-popup__subtitle">Choose your reward:</p>
-            <div className="rogue-popup__choices">
-              <button type="button" className="rogue-popup__choice" onClick={handleTakePower}>
-                <img src={POWERS[rewardChoice].icon} alt={rewardChoice} />
-                <span className="rogue-popup__choice-title">{rewardChoice}</span>
-                <span className="rogue-popup__choice-desc">{POWERS[rewardChoice].desc}</span>
-              </button>
-              <button type="button" className="rogue-popup__choice" onClick={handleTakeBonusScore}>
-                <span className="rogue-popup__choice-emoji">✦</span>
-                <span className="rogue-popup__choice-title">+{level * 50 * moneyMultiplier} Bonus Score</span>
-                <span className="rogue-popup__choice-desc">Added straight to your total score.</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showGameOverPopup && (
-        <div className="rogue-popup-overlay">
-          <div className="rogue-popup">
-            <h2 className="rogue-popup__title">Run over!</h2>
-            <p className="rogue-popup__subtitle">
-              You reached level {level} with a total score of {totalScore}.
-            </p>
-            <button type="button" className="btn btn--primary rogue-popup__cta" onClick={handleNewRun}>
-              Start New Run
+      {rewardChoice !== null && (
+        <Modal overlayClassName="rogue-popup-overlay" className="rogue-popup" labelledBy="rogue-reward-title">
+          <h2 className="rogue-popup__title" id="rogue-reward-title">Level {level} beaten!</h2>
+          <p className="rogue-popup__subtitle">Choose your reward:</p>
+          <div className="rogue-popup__choices">
+            <button type="button" className="rogue-popup__choice" onClick={handleTakePower}>
+              <img src={POWERS[rewardChoice].icon} alt="" />
+              <span className="rogue-popup__choice-title">
+                {rewardChoice}
+                {powers.includes(rewardChoice) && " (+ charge)"}
+              </span>
+              <span className="rogue-popup__choice-desc">{POWERS[rewardChoice].desc}</span>
+            </button>
+            <button type="button" className="rogue-popup__choice" onClick={handleTakeBonusScore}>
+              <span className="rogue-popup__choice-emoji" aria-hidden="true">✦</span>
+              <span className="rogue-popup__choice-title">+{bonusScore(level, powers)} Bonus Score</span>
+              <span className="rogue-popup__choice-desc">Added straight to your total score.</span>
             </button>
           </div>
-        </div>
+        </Modal>
       )}
 
       {infoPower && (
-        <div className="rogue-popup-overlay" onClick={() => setInfoPower(null)}>
-          <div className="rogue-popup" onClick={(e) => e.stopPropagation()}>
-            <img className="rogue-popup__info-icon" src={POWERS[infoPower].icon} alt={infoPower} />
-            <h2 className="rogue-popup__title">{infoPower}</h2>
-            <p className="rogue-popup__subtitle">{POWERS[infoPower].desc}</p>
-            <button type="button" className="btn btn--primary rogue-popup__cta" onClick={() => setInfoPower(null)}>
-              Okay
-            </button>
-          </div>
-        </div>
+        <Modal
+          overlayClassName="rogue-popup-overlay"
+          className="rogue-popup"
+          labelledBy="rogue-info-title"
+          onClose={() => setInfoPower(null)}
+        >
+          <img className="rogue-popup__info-icon" src={POWERS[infoPower].icon} alt="" />
+          <h2 className="rogue-popup__title" id="rogue-info-title">{infoPower}</h2>
+          <p className="rogue-popup__subtitle">{POWERS[infoPower].desc}</p>
+          <button type="button" className="btn btn--primary rogue-popup__cta" onClick={() => setInfoPower(null)}>
+            Okay
+          </button>
+        </Modal>
       )}
     </div>
   );

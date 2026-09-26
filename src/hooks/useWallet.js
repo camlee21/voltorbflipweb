@@ -3,76 +3,96 @@ import { supabase } from "../lib/supabaseClient";
 
 const DEFAULT_WALLET = { coins: 0, themes: ["classic"], inventory: {} };
 
-export function useWallet(user) {
-  const [wallet, setWallet] = useState(DEFAULT_WALLET);
-  const [loading, setLoading] = useState(true);
+function toWallet(row) {
+  return {
+    coins: row.coins ?? 0,
+    themes: row.themes ?? ["classic"],
+    inventory: row.inventory ?? {},
+  };
+}
 
-  const fetchWallet = useCallback(async () => {
-    if (!user) {
-      setWallet(DEFAULT_WALLET);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
+// Resolves to the user's wallet, or null if it couldn't be loaded.
+async function loadWallet(userId) {
+  try {
     const { data, error } = await supabase
       .from("profiles")
       .select("coins, themes, inventory")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .single();
+    return !error && data ? toWallet(data) : null;
+  } catch {
+    return null;
+  }
+}
 
-    if (!error && data) {
-      setWallet({
-        coins: data.coins ?? 0,
-        themes: data.themes ?? ["classic"],
-        inventory: data.inventory ?? {},
-      });
-    }
-    setLoading(false);
-  }, [user]);
+// Everything keys off the user's id rather than the user object, which
+// Supabase replaces on every token refresh.
+export function useWallet(user) {
+  const userId = user?.id ?? null;
+  const [wallet, setWallet] = useState(DEFAULT_WALLET);
+  // The user id whose wallet is currently loaded; loading until it matches.
+  const [loadedFor, setLoadedFor] = useState(undefined);
+
+  const fetchWallet = useCallback(async () => {
+    if (!userId) return;
+    const loaded = await loadWallet(userId);
+    if (loaded) setWallet(loaded);
+    setLoadedFor(userId);
+  }, [userId]);
+
+  // Signed out: drop the previous wallet.
+  if (loadedFor !== userId && !userId) {
+    setWallet(DEFAULT_WALLET);
+    setLoadedFor(null);
+  }
 
   useEffect(() => {
-    fetchWallet();
-  }, [fetchWallet]);
+    if (!userId) return;
+    let cancelled = false;
+    loadWallet(userId).then((loaded) => {
+      if (cancelled) return;
+      if (loaded) setWallet(loaded);
+      setLoadedFor(userId);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
     const channel = supabase
-      .channel(`profile-${user.id}`)
+      .channel(`profile-${userId}`)
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "profiles", filter: `user_id=eq.${user.id}` },
-        (payload) => {
-          setWallet({
-            coins: payload.new.coins ?? 0,
-            themes: payload.new.themes ?? ["classic"],
-            inventory: payload.new.inventory ?? {},
-          });
-        }
+        { event: "UPDATE", schema: "public", table: "profiles", filter: `user_id=eq.${userId}` },
+        (payload) => setWallet(toWallet(payload.new))
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [userId]);
 
   const addCoins = useCallback(
     async (amount) => {
-      if (!user || !amount || amount <= 0) return;
+      if (!userId || !amount || amount <= 0) return;
       const { data, error } = await supabase.rpc("add_coins", { amount: Math.round(amount) });
       if (!error && typeof data === "number") {
         setWallet((w) => ({ ...w, coins: data }));
       }
     },
-    [user]
+    [userId]
   );
 
-  // Buys a theme via the server-side RPC (see SQL: purchase_theme). Returns
-  // { error: null } on success, or { error: "insufficient-coins" | string }
-  // on failure — the caller decides how to surface that.
+  // Buys a theme via the server-side RPC (see supabase/migrations). The
+  // server looks the price up itself; `price` is still sent so this works
+  // against the older function signature too, but it's ignored. Returns
+  // { error: null } on success, or { error: "insufficient-coins" | string }.
   const purchaseTheme = useCallback(
     async (themeId, price) => {
-      if (!user) return { error: "not-signed-in" };
+      if (!userId) return { error: "not-signed-in" };
       const { data, error } = await supabase.rpc("purchase_theme", {
         theme_key: themeId,
         price,
@@ -95,8 +115,10 @@ export function useWallet(user) {
       }
       return { error: null };
     },
-    [user]
+    [userId]
   );
+
+  const loading = loadedFor !== userId;
 
   return { ...wallet, loading, addCoins, purchaseTheme, refreshWallet: fetchWallet };
 }

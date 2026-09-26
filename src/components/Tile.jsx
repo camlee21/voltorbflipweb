@@ -4,18 +4,29 @@ import "./Tile.css";
 const LONG_PRESS_MS = 300;
 const MOVE_THRESHOLD_PX = 10;
 
-export default function Tile({ tile, theme, onFlip, onNote, disabled, flipDelay = 0 }) {
-  // Only update the value shown on the front face at the moment a tile
-  // actually flips face-up
-  const [displayedValue, setDisplayedValue] = useState(tile.value);
+function describeTile(tile, row, col) {
+  const where = `Row ${row + 1}, column ${col + 1}`;
+  if (tile.revealed) return `${where}: ${tile.value === 0 ? "Voltorb" : tile.value}`;
+  return `${where}: ${tile.noted ? "hidden, noted" : "hidden"}`;
+}
 
+export default function Tile({ tile, row, col, theme, onFlip, onNote, disabled, flipDelay = 0 }) {
+  // The value shown on the front face. It only updates when a tile flips
+  // face-up (and stays put while it flips back down), and starts out empty so
+  // hidden values never appear in the DOM or as image requests.
+  const [displayedValue, setDisplayedValue] = useState(null);
+  if (tile.revealed && displayedValue !== tile.value) {
+    setDisplayedValue(tile.value);
+  }
+
+  // The long-press timer calls whatever onNote is current when it fires, not
+  // the one from the render where the touch started.
+  const onNoteRef = useRef(onNote);
   useEffect(() => {
-    if (tile.revealed) {
-      setDisplayedValue(tile.value);
-    }
-  }, [tile.revealed, tile.value]);
+    onNoteRef.current = onNote;
+  });
 
-  const frontSrc = `/sprites/${displayedValue}_${theme}.png`;
+  const frontSrc = displayedValue === null ? null : `/sprites/${displayedValue}_${theme}.png`;
   const backSrc = tile.noted
     ? `/sprites/NotedTile_${theme}.png`
     : `/sprites/UnknownTile_${theme}.png`;
@@ -51,6 +62,8 @@ export default function Tile({ tile, theme, onFlip, onNote, disabled, flipDelay 
     onNote();
   }
 
+  useEffect(() => () => clearTimeout(timerRef.current), []);
+
   function handleTouchStart(e) {
     if (disabled) return;
     // Suppress the browser's own long-press gesture (text selection,
@@ -62,7 +75,7 @@ export default function Tile({ tile, theme, onFlip, onNote, disabled, flipDelay 
     timerRef.current = setTimeout(() => {
       longPressFiredRef.current = true;
       if (navigator.vibrate) navigator.vibrate(15);
-      onNote();
+      onNoteRef.current();
     }, LONG_PRESS_MS);
   }
 
@@ -96,7 +109,7 @@ export default function Tile({ tile, theme, onFlip, onNote, disabled, flipDelay 
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchCancel}
       disabled={disabled || tile.revealed}
-      aria-label={tile.revealed ? `Revealed tile: ${tile.value}` : "Hidden tile"}
+      aria-label={describeTile(tile, row, col)}
       style={{ WebkitTouchCallout: "none" }}
     >
       <div
@@ -107,7 +120,7 @@ export default function Tile({ tile, theme, onFlip, onNote, disabled, flipDelay 
           <img src={backSrc} alt="" draggable={false} />
         </div>
         <div className="tile-face tile-face-front">
-          <img src={frontSrc} alt="" draggable={false} />
+          {frontSrc && <img src={frontSrc} alt="" draggable={false} />}
         </div>
       </div>
     </button>

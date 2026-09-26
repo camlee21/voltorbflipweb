@@ -1,6 +1,6 @@
 // gameLogic.js
-// Port of VoltorbStructs.swift + the daily-board logic from DailyVoltorbView.swift
-// Pure JS, no framework dependencies, so it's easy to unit test independently of React.
+// Port of VoltorbStructs.swift. Pure JS, no framework dependencies, so it's
+// easy to unit test independently of React.
 
 export const GRID_SIZE = 5;
 
@@ -17,63 +17,16 @@ export const levelOptions = [
   [[0, 7, 10], [8, 2, 10], [5, 4, 10], [2, 6, 10], [7, 3, 10]],
 ];
 
-// The day the daily-challenge numbering starts from (Day #1).
-// Change this if you want your own launch date.
-const DAILY_EPOCH = new Date(2025, 4, 25); // May 25, 2025 (month is 0-indexed)
+// The highest level with a defined pattern pool — beating it loops back
+// instead of advancing to an undefined level.
+export const MAX_LEVEL = levelOptions.length;
 
 /**
- * Returns the number of whole calendar days between DAILY_EPOCH and today,
- * using local time at midnight (mirrors Swift's `calendar.startOfDay`).
+ * Picks a random pattern for a level from that level's pool in `levelOptions`.
  */
-export function getDayNumber(now = new Date()) {
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startOfEpoch = new Date(
-    DAILY_EPOCH.getFullYear(),
-    DAILY_EPOCH.getMonth(),
-    DAILY_EPOCH.getDate()
-  );
-  const msPerDay = 24 * 60 * 60 * 1000;
-  const daysSince = Math.round((startOfToday - startOfEpoch) / msPerDay);
-  return daysSince + 1; // Day 1 is the epoch date
-}
-
-// --- Seeded PRNG -----------------------------------------------------------
-// The iOS app seeds a Mersenne-Twister with the day number so every player
-// sees the same board on the same day. We don't need bit-for-bit parity with
-// iOS (this is a separate, standalone web game) — we just need something
-// deterministic per-day. mulberry32 is a small, fast, good-enough PRNG for this.
-function mulberry32(seed) {
-  let a = seed >>> 0;
-  return function () {
-    a |= 0;
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-/**
- * Deterministically builds today's set of 8 level patterns (one per level,
- * chosen from that level's 5 options) from a single seeded RNG stream —
- * same idea as `getDailyBoard(for:)` in DailyVoltorbView.swift.
- */
-export function getDailyBoard(day) {
-  const rng = mulberry32(day);
-  return levelOptions.map((options) => {
-    const idx = Math.floor(rng() * options.length);
-    return options[idx];
-  });
-}
-
-/**
- * Picks a random pattern for a level for free-play/"Normal" mode — same
- * pattern pool as the daily board (`levelOptions`), just chosen freshly
- * with Math.random() each time instead of a per-day seed.
- */
-export function getRandomPatternForLevel(level) {
+export function getRandomPatternForLevel(level, rng = Math.random) {
   const options = levelOptions[level - 1];
-  const idx = Math.floor(Math.random() * options.length);
+  const idx = Math.floor(rng() * options.length);
   return options[idx];
 }
 
@@ -85,7 +38,7 @@ export function getRandomPatternForLevel(level) {
  *   { id, value, revealed, noted }
  * value: 0 = Voltorb (bomb), 1/2/3 = point multiplier tiles.
  */
-export function buildGrid(pattern) {
+export function buildGrid(pattern, rng = Math.random) {
   const [count2, count3, count0] = pattern;
   const totalTiles = GRID_SIZE * GRID_SIZE; // 25
   const count1 = totalTiles - count2 - count3 - count0;
@@ -105,7 +58,7 @@ export function buildGrid(pattern) {
 
   // Fisher-Yates shuffle
   for (let i = values.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rng() * (i + 1));
     [values[i], values[j]] = [values[j], values[i]];
   }
 
@@ -127,6 +80,11 @@ export function buildGrid(pattern) {
   return { grid, maxScore };
 }
 
+/** Builds a random board for a level: { grid, maxScore }. */
+export function buildLevel(level, rng = Math.random) {
+  return buildGrid(getRandomPatternForLevel(level, rng), rng);
+}
+
 export function rowStats(grid, row) {
   const tiles = grid[row];
   const voltorbs = tiles.filter((t) => t.value === 0).length;
@@ -142,6 +100,67 @@ export function columnStats(grid, col) {
   return { voltorbs, points };
 }
 
+/** Stats for the top-left → bottom-right diagonal (Rogue's Corner Count). */
+export function diagonalStats(grid) {
+  let voltorbs = 0;
+  let points = 0;
+  for (let i = 0; i < GRID_SIZE; i++) {
+    const tile = grid[i][i];
+    if (tile.value === 0) voltorbs += 1;
+    else points += tile.value;
+  }
+  return { voltorbs, points };
+}
+
+// --- Immutable grid updates -------------------------------------------------
+// Always use these through a functional updater (`setGrid((g) => ...)`) so a
+// delayed callback never writes back an out-of-date copy of the board.
+
+function updateTile(grid, row, col, patch) {
+  return grid.map((r, ri) =>
+    ri === row ? r.map((t, ci) => (ci === col ? { ...t, ...patch } : t)) : r
+  );
+}
+
+export function revealTile(grid, row, col) {
+  return updateTile(grid, row, col, { revealed: true, noted: false });
+}
+
+export function hideTile(grid, row, col) {
+  return updateTile(grid, row, col, { revealed: false });
+}
+
+export function toggleTileNote(grid, row, col) {
+  const tile = grid[row][col];
+  if (tile.revealed) return grid;
+  return updateTile(grid, row, col, { noted: !tile.noted });
+}
+
 export function revealBoard(grid) {
   return grid.map((row) => row.map((tile) => ({ ...tile, noted: false, revealed: true })));
+}
+
+// --- Classic (HGSS) level rules ---------------------------------------------
+
+// HGSS: clear this many boards in a row, flipping at least
+// JUMP_MIN_FLIPS tiles on each, and you jump straight to level 8.
+export const JUMP_STREAK = 5;
+export const JUMP_MIN_FLIPS = 8;
+
+/**
+ * Level after flipping a Voltorb: if you flipped fewer tiles than your
+ * current level number, you drop to that many (minimum 1).
+ */
+export function classicLevelAfterLoss(level, flips) {
+  return flips < level ? Math.max(1, flips) : level;
+}
+
+/**
+ * Level and streak after clearing a board. `streak` counts consecutive
+ * clears with at least JUMP_MIN_FLIPS flips each.
+ */
+export function classicLevelAfterWin(level, flips, streak) {
+  const nextStreak = flips >= JUMP_MIN_FLIPS ? streak + 1 : 0;
+  const nextLevel = nextStreak >= JUMP_STREAK ? MAX_LEVEL : Math.min(level + 1, MAX_LEVEL);
+  return { level: nextLevel, streak: nextStreak };
 }

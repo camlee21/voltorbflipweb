@@ -1,9 +1,13 @@
 import "./Counter.css";
 
-export default function Counter({ points, voltorbs, icon }) {
+export default function Counter({ points, voltorbs, icon, label }) {
   return (
-    <div className="stat-counter">
-      <div className="stat-counter__bands">
+    <div
+      className="stat-counter"
+      role="img"
+      aria-label={`${label ? `${label}: ` : ""}${points} points, ${voltorbs} Voltorb${voltorbs === 1 ? "" : "s"}`}
+    >
+      <div className="stat-counter__bands" aria-hidden="true">
         <span className="stat-counter__band stat-counter__band--points">
           {String(points).padStart(2, "0")}
         </span>

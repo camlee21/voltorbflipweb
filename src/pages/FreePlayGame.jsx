@@ -1,26 +1,20 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
-import Tile from "../components/Tile";
-import Counter from "../components/Counter";
-import { suppressBoardContextMenu } from "../utils/boardContextMenu";
+import Board from "../components/Board";
+import NoteToggle from "../components/NoteToggle";
 
-import {
-  getRandomPatternForLevel,
-  buildGrid,
-  rowStats,
-  columnStats,
-  revealBoard,
-} from "../game/gameLogic";
+import { buildLevel, revealTile, toggleTileNote, revealBoard, levelOptions } from "../game/gameLogic";
 
 import { useEquippedTheme } from "../utils/useEquippedTheme";
+import { useTimeouts } from "../hooks/useTimeouts";
+import { useConfirmArm } from "../hooks/useConfirmArm";
 
 import "./FreePlayGame.css";
 
-const LEVELS = [1, 2, 3, 4, 5, 6, 7, 8];
+const LEVELS = levelOptions.map((_, i) => i + 1);
 const BACKGROUND_IMAGE = `/sprites/voltorb_background.png`;
-const VOLTORB_ICON = "/sprites/counters/voltorb-count-icon.png";
-const POINTS_ICON = "/sprites/counters/points-count-icon-placeholder.png";
-const STAGGER_MS = 90;
+// Delay before the whole board flips up after a loss.
+const LOSS_REVEAL_MS = 500;
 
 function getMessageTone(msg) {
   if (!msg) return "";
@@ -31,66 +25,43 @@ function getMessageTone(msg) {
 
 export default function FreePlayGame() {
   // The player's currently-equipped board theme (defaults to "classic")
-  // Tile sprite paths (`/sprites/${value}_${theme}.png`) key off this
   const [equippedTheme] = useEquippedTheme();
 
-  // Mobile-only: when on, tapping a tile notes it instead of flipping it.
+  // When on, tapping a tile notes it instead of flipping it.
   // Long-press-to-note (see Tile.jsx) still works independently either way.
   const [noteMode, setNoteMode] = useState(false);
 
   const [level, setLevel] = useState(1);
   const [score, setScore] = useState(1);
   const [gameOver, setGameOver] = useState(false);
+  // False once this board has been submitted as beaten.
   const [newGame, setNewGame] = useState(true);
-  const [grid, setGrid] = useState([]);
-  const [maxScore, setMaxScore] = useState(1);
+  const [board, setBoard] = useState(() => buildLevel(1));
+  const { grid, maxScore } = board;
   const [message, setMessage] = useState("");
-  const [pendingAction, setPendingAction] = useState(null);
 
   // Gates the column-stagger animation so a normal single-tile flip stays instant.
   const [revealing, setRevealing] = useState(false);
 
-  // Guards against the level-change effect firing on first mount
-  const isFirstRender = useRef(true);
-  const resetBtnRef = useRef(null);
-  const revealBtnRef = useRef(null);
+  const [pendingAction, confirm] = useConfirmArm();
+  const { schedule, clearAll } = useTimeouts();
 
-  useEffect(() => {
-    startLevel(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const setGrid = (update) => setBoard((b) => ({ ...b, grid: update(b.grid) }));
 
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    startLevel(level);
+  function startLevel(levelNumber) {
+    clearAll();
+    setBoard(buildLevel(levelNumber));
     setScore(1);
     setNewGame(true);
     setGameOver(false);
     setMessage("");
     setRevealing(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [level]);
+  }
 
-  useEffect(() => {
-    if (!pendingAction) return;
-    function handleWindowClick(e) {
-      const activeRef = pendingAction === "reset" ? resetBtnRef.current : revealBtnRef.current;
-      if (activeRef && !activeRef.contains(e.target)) {
-        setPendingAction(null);
-      }
-    }
-    window.addEventListener("click", handleWindowClick);
-    return () => window.removeEventListener("click", handleWindowClick);
-  }, [pendingAction]);
-
-  function startLevel(levelNumber) {
-    const pattern = getRandomPatternForLevel(levelNumber);
-    const { grid, maxScore } = buildGrid(pattern);
-    setGrid(grid);
-    setMaxScore(maxScore);
+  function selectLevel(levelNumber) {
+    if (levelNumber === level) return;
+    setLevel(levelNumber);
+    startLevel(levelNumber);
   }
 
   function handleFlip(row, col) {
@@ -98,86 +69,46 @@ export default function FreePlayGame() {
     const tile = grid[row][col];
     if (tile.revealed) return;
 
-    const value = tile.value;
-    const newGrid = grid.map((r) => r.map((t) => ({ ...t })));
-    newGrid[row][col].revealed = true;
-    newGrid[row][col].noted = false;
-    setGrid(newGrid);
+    setGrid((g) => revealTile(g, row, col));
 
-    if (value !== 0) {
-      setScore((s) => s * value);
-    } else {
-      // Hit a Voltorb.
-      setGameOver(true);
-      setMessage("Oops! You lost!");
-      setTimeout(() => {
-        setGrid(revealBoard(newGrid));
-        setRevealing(true);
-      }, 500);
+    if (tile.value !== 0) {
+      setScore((s) => s * tile.value);
+      return;
     }
+
+    // Hit a Voltorb.
+    setGameOver(true);
+    setMessage("Oops! You lost!");
+    schedule(() => {
+      setGrid(revealBoard);
+      setRevealing(true);
+    }, LOSS_REVEAL_MS);
   }
 
-  function toggleNote(row, col) {
-    const tile = grid[row][col];
-    if (tile.revealed) return;
-    const newGrid = grid.map((r) => r.map((t) => ({ ...t })));
-    newGrid[row][col].noted = !newGrid[row][col].noted;
-    setGrid(newGrid);
-  }
-
-  function handleRightClickNote(row, col) {
+  function handleNote(row, col) {
     if (gameOver) return;
-    toggleNote(row, col);
+    setGrid((g) => toggleTileNote(g, row, col));
   }
 
   function handleTileFlip(row, col) {
-    if (noteMode) {
-      handleRightClickNote(row, col);
-      return;
-    }
-    handleFlip(row, col);
-  }
-
-  function handleReset() {
-    startLevel(level);
-    setScore(1);
-    setNewGame(true);
-    setGameOver(false);
-    setMessage("");
-    setRevealing(false);
+    if (noteMode) handleNote(row, col);
+    else handleFlip(row, col);
   }
 
   function handleReveal() {
-    setGrid(revealBoard(grid));
+    clearAll();
+    setGrid(revealBoard);
     setRevealing(true);
   }
 
-  function handleDangerClick(action) {
-    if (pendingAction === action) {
-      setPendingAction(null);
-      if (action === "reset") handleReset();
-      else handleReveal();
-      return;
-    }
-    if (pendingAction !== null) {
-      setPendingAction(null);
-      return;
-    }
-    setPendingAction(action);
-  }
-
   function handleSubmit() {
-    if (score === maxScore && newGame) {
+    if (gameOver) {
+      setMessage("You lost this board! Reset to try again.");
+    } else if (score === maxScore && newGame) {
       setMessage("Level beaten!");
       setNewGame(false);
-      setGrid(revealBoard(grid));
+      setGrid(revealBoard);
       setRevealing(true);
-      // setTimeout(() => {
-      //   startLevel(level);
-      //   setNewGame(true);
-      //   setScore(1);
-      //   setMessage("");
-      // }, 1000);
     } else if (score === maxScore) {
       setMessage("Reset to start a new game.");
     } else {
@@ -185,79 +116,36 @@ export default function FreePlayGame() {
     }
   }
 
-  function flipDelayFor(col, tile) {
-    if (!revealing || !tile.revealed) return 0;
-    return col * STAGGER_MS;
-  }
-
-  if (grid.length === 0) {
-    return (
-      <div className="free-play-page">
-        <p className="loading-text">Loading…</p>
-      </div>
-    );
-  }
-
   return (
     <div className="free-play-page" style={{ "--bg-image": `url(${BACKGROUND_IMAGE})` }}>
-
-      <main className="layout">
-        <section className="board-panel" aria-label="Game board">
-          <div className="board" style={{ "--tile-size": "clamp(40px, 12vw, 80px)" }} onContextMenu={suppressBoardContextMenu}>
-            {grid.map((row, r) => (
-              <div key={r} style={{ display: "contents" }}>
-                {row.map((tile, c) => (
-                  <Tile
-                    key={tile.id}
-                    tile={tile}
-                    theme={equippedTheme}
-                    disabled={gameOver}
-                    onFlip={() => handleTileFlip(r, c)}
-                    onNote={() => handleRightClickNote(r, c)}
-                    flipDelay={flipDelayFor(c, tile)}
-                  />
-                ))}
-                {(() => {
-                  const stats = rowStats(grid, r);
-                  return <Counter points={stats.points} voltorbs={stats.voltorbs} icon={VOLTORB_ICON} />;
-                })()}
-              </div>
-            ))}
-
-            {[0, 1, 2, 3, 4].map((c) => {
-              const stats = columnStats(grid, c);
-              return <Counter key={`col-${c}`} points={stats.points} voltorbs={stats.voltorbs} icon={VOLTORB_ICON} />;
-            })}
-            <div />
-          </div>
+      <div className="layout">
+        <section className="board-panel" aria-label="Free Play board">
+          <Board
+            grid={grid}
+            theme={equippedTheme}
+            disabled={gameOver}
+            revealing={revealing}
+            onFlip={handleTileFlip}
+            onNote={handleNote}
+            label="Free Play board tiles"
+          />
 
           <p className="hint">Right-click (or long-press on mobile) a tile to note it.</p>
 
-          <div className="note-toggle">
-            <span className="note-toggle__label">Note Mode</span>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={noteMode}
-              aria-label="Toggle note mode"
-              className={`note-toggle__switch ${noteMode ? "is-on" : ""}`}
-              onClick={() => setNoteMode((v) => !v)}
-            >
-              <span className="note-toggle__knob" />
-            </button>
-          </div>
+          <NoteToggle on={noteMode} onChange={setNoteMode} />
         </section>
 
         <aside className="sidebar">
           <div className="sidebar__group">
-            <span className="field-label">Level</span>
-            <div className="level-pills" role="group" aria-label="Level">
+            <span className="field-label" id="free-play-level-label">Level</span>
+            <div className="level-pills" role="group" aria-labelledby="free-play-level-label">
               {LEVELS.map((lvl) => (
                 <button
                   key={lvl}
                   type="button"
                   className={`level-pill ${level === lvl ? "active" : ""}`}
-                  onClick={() => setLevel(lvl)}
+                  aria-pressed={level === lvl}
+                  onClick={() => selectLevel(lvl)}
                 >
                   {lvl}
                 </button>
@@ -270,22 +158,26 @@ export default function FreePlayGame() {
             <span className="scoreboard__value">{score}</span>
           </div>
 
-          {message && <p className={`message ${getMessageTone(message)}`}>{message}</p>}
+          {message && (
+            <p className={`message ${getMessageTone(message)}`} role="status">
+              {message}
+            </p>
+          )}
 
           <div className="sidebar__actions">
             <button
-              ref={resetBtnRef}
               type="button"
+              data-confirm="reset"
               className={`btn btn--ghost ${pendingAction === "reset" ? "armed" : ""}`}
-              onClick={() => handleDangerClick("reset")}
+              onClick={() => confirm("reset", () => startLevel(level))}
             >
               Reset
             </button>
             <button
-              ref={revealBtnRef}
               type="button"
+              data-confirm="reveal"
               className={`btn btn--ghost ${pendingAction === "reveal" ? "armed" : ""}`}
-              onClick={() => handleDangerClick("reveal")}
+              onClick={() => confirm("reveal", handleReveal)}
             >
               Reveal
             </button>
@@ -294,7 +186,7 @@ export default function FreePlayGame() {
             </button>
           </div>
         </aside>
-      </main>
+      </div>
     </div>
   );
 }

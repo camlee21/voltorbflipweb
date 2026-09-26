@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAuthContext } from "../contexts/AuthContext";
+import { useAuthContext } from "../contexts/useAuthContext";
 import { getEquippedTheme, setEquippedTheme, EQUIPPED_THEME_EVENT, DEFAULT_THEME } from "./equippedTheme";
 
 export function useEquippedTheme() {

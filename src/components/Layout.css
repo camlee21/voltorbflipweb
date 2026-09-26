@@ -36,6 +36,7 @@ header {
   display: flex;
   align-items: center;
   gap: clamp(10px, 3vw, 20px);
+  text-decoration: none;
 }
 
 .site-banner__icon {
@@ -112,6 +113,73 @@ header {
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+}
+
+.header-desktop__side {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 1;
+  margin-top: 12px;
+}
+
+.header-desktop__links {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-desktop__auth {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 12px;
+  margin-bottom: 44px;
+}
+
+.auth-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  transition: background 0.2s, transform 0.15s;
+  flex-shrink: 0;
+}
+
+.social-btn:hover,
+.social-btn:focus-visible {
+  background: rgba(255, 255, 255, 0.16);
+  transform: translateY(-1px);
+}
+
+.social-btn__img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.kofi-btn__cup {
+  display: block;
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.kofi-btn__cup--small {
+  width: 16px;
+  height: 16px;
 }
 
 .icon-btn {
