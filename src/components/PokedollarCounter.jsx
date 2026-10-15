@@ -33,10 +33,10 @@ export default function PokedollarCounter() {
   return (
     <Link
       to="/shop"
-      className="header-chip"
+      className="topbar-btn coin-btn"
       aria-label={user && !loading ? `${coins.toLocaleString()} coins, open the Shop` : "Open the Shop"}
     >
-      <img src="/pokedollar.png" alt="" className="header-chip__coin" />
+      <img src="/pokedollar.png" alt="" />
       {label}
     </Link>
   );

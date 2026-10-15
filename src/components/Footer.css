@@ -1,48 +1,72 @@
+/* Who's That Trainer's footer: one centred row of spaced links (no "•" separators,
+   which dangle at the start of a wrapped line on phones). */
 .site-footer {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 12px 24px;
+  justify-content: center;
   margin-top: 56px;
   padding-top: 20px;
-  border-top: 1px solid var(--color-border);
-  font-size: 0.875rem;
+  border-top: 2px solid var(--color-border);
 }
 
-.site-footer__group {
+.site-footer-links {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 20px;
+  justify-content: center;
+  gap: 0 20px;
 }
 
-.site-footer__link {
+.site-footer-link {
+  padding: 10px 2px;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.site-footer-link:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+.site-footer-social {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: var(--color-text-muted);
-  font-weight: 700;
-  text-decoration: none;
 }
 
-.site-footer__link:hover {
-  color: var(--color-text);
-}
-
-.site-footer__icon {
-  width: 14px;
-  height: 14px;
+.site-footer-icon {
+  width: 16px;
+  height: 16px;
   object-fit: contain;
 }
 
-@media (max-width: 800px) {
+/* Sets the Twitter link apart on desktop; hidden on phones so the icon sits with the other links */
+.site-footer-sep {
+  width: 2px;
+  height: 14px;
+  border-radius: 1px;
+  background: var(--color-border);
+}
+
+@media (max-width: 840px) {
   .site-footer {
-    flex-direction: column;
-    align-items: center;
     margin-top: 40px;
   }
 
-  .site-footer__group {
-    justify-content: center;
+  .site-footer-links {
+    gap: 0 14px;
+  }
+
+  .site-footer-link {
+    font-size: 0.8125rem;
+  }
+
+  .site-footer-handle,
+  .site-footer-sep {
+    display: none;
   }
 }

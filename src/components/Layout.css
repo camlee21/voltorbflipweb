@@ -1,36 +1,207 @@
-/* ── Layout shell ── */
+/* ── Layout shell, matching Who's That Trainer: a bar of controls on top,
+      the brand centred on its own stage below, a centred link row at the end ── */
 .app-root {
   min-height: 100vh;
-  /* The theme's two background tones: a lighter band behind the header fading into the page. */
+  /* The theme's two background tones: a lighter band under the top bar fading into the page. */
   background: linear-gradient(180deg, var(--bg-alt) 0, var(--bg-main) 420px) no-repeat, var(--bg-main);
 }
 
-.content-wrapper {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 20px 24px 32px;
+/* ── Top bar ── */
+.topbar {
+  background: var(--color-surface);
+  border-bottom: 2px solid var(--color-border);
 }
 
-/* ── Header ── */
-.site-header {
+.topbar-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 10px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 36px;
+  gap: 12px;
 }
 
+.topbar-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Keys: the raised surface on a hard lip, sinking onto it on press. */
+.topbar-btn {
+  --key-bg: var(--color-surface-raised);
+  --key-fg: var(--color-text);
+  --key-lip: var(--ledge);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 14px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--key-bg);
+  color: var(--key-fg);
+  box-shadow: 0 2px 0 var(--key-lip);
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1.1;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 90ms ease-out, box-shadow 90ms ease-out, border-color 150ms ease, filter 150ms ease;
+}
+
+.topbar-btn:hover {
+  border-color: var(--color-border-strong);
+}
+
+.topbar-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 0 0 var(--key-lip);
+  transition-duration: 40ms;
+}
+
+.topbar-btn img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+/* Ko-fi and Log in are the accent keys. */
+.topbar-btn.kofi-btn,
+.topbar-btn--accent {
+  --key-bg: var(--color-accent);
+  --key-fg: var(--color-accent-ink);
+  --key-lip: color-mix(in srgb, var(--color-accent) 55%, black);
+  border: none;
+}
+
+.topbar-btn.kofi-btn:hover,
+.topbar-btn--accent:hover {
+  filter: brightness(1.07);
+}
+
+.kofi-label-short {
+  display: none;
+}
+
+.coin-btn {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Account menu ── */
+.account {
+  position: relative;
+}
+
+.account-btn {
+  padding: 0 10px 0 6px;
+}
+
+.account-initial {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.topbar-btn img.account-initial {
+  width: 26px;
+  height: 26px;
+  object-fit: cover;
+  background: var(--color-surface-recessed);
+}
+
+.account-name {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.account-chevron {
+  color: var(--color-text-muted);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.account-btn[aria-expanded="true"] .account-chevron {
+  transform: rotate(180deg);
+}
+
+.account-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+  max-width: calc(100vw - 32px);
+  padding: 14px;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+  transform-origin: top right;
+  animation: account-menu-in 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes account-menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+}
+
+.account-menu-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.account-menu-name {
+  margin-top: 2px;
+  font-weight: 800;
+}
+
+.account-menu-email {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-signout {
+  margin-top: 12px;
+  width: 100%;
+}
+
+/* ── Brand: the first thing in the bar ── */
 .brand {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
+  margin-right: auto;
+  border-radius: var(--radius-md);
   text-decoration: none;
   min-width: 0;
 }
 
 .brand__icon {
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
   border-radius: var(--radius-md);
   border: 2px solid var(--color-text);
   object-fit: cover;
@@ -40,124 +211,29 @@
 .brand__text {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
 }
 
 .brand__title {
   font-family: var(--font-display);
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   line-height: 1;
   color: var(--color-accent-strong);
   white-space: nowrap;
 }
 
 .brand__byline {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   line-height: 1;
   color: var(--color-text-muted);
 }
 
-/* Coins and Ko-fi on top, account controls underneath, both right-aligned. */
-.header-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-.header-actions__row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* Coin counter and plain header buttons share one quiet chip style. */
-.header-chip,
-.header-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 38px;
-  padding: 0 14px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border-strong);
-  background: var(--color-surface);
-  color: var(--color-text);
-  font-size: 0.875rem;
-  font-weight: 700;
-  line-height: 1;
-  text-decoration: none;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.header-chip:hover,
-.header-btn:hover {
-  background: var(--color-surface-raised);
-}
-
-.header-chip__coin {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
-}
-
-.header-btn--accent {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-  color: var(--color-accent-ink);
-}
-
-.header-btn--accent:hover {
-  background: var(--color-accent-strong);
-  border-color: var(--color-accent-strong);
-}
-
-/* Ko-fi is the one highlighted link in the header. */
-.kofi-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 38px;
-  padding: 0 16px;
-  border: 1px solid var(--color-accent);
-  border-radius: 999px;
-  background: var(--color-accent);
-  color: var(--color-accent-ink);
-  font-size: 0.875rem;
-  font-weight: 800;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.kofi-btn:hover {
-  background: var(--color-accent-strong);
-  border-color: var(--color-accent-strong);
-}
-
-.kofi-btn__cup {
-  display: block;
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
-}
-
-.auth-user {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.auth-user__name {
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: var(--color-text-muted);
+/* ── Page column ── */
+.content-wrapper {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 24px 32px;
 }
 
 /* Hidden header for search results */
@@ -173,72 +249,75 @@
   border: 0;
 }
 
-@media (max-width: 800px) {
+@media (max-width: 840px) {
+  .topbar-inner {
+    padding: 8px 16px;
+  }
+
+  .kofi-label-long {
+    display: none;
+  }
+
+  .kofi-label-short {
+    display: inline;
+  }
+
   .content-wrapper {
-    padding: 14px 16px 24px;
+    padding: 20px 16px 24px;
   }
+}
 
-  /* The two action rows join the header directly: chips beside the brand,
-     account controls on their own centred row underneath. */
-  .site-header {
+/* Phones: the brand gets the bar's first row to itself, centred; coins sit
+   under it on the left and Ko-fi + account on the right. */
+@media (max-width: 640px) {
+  .topbar-inner {
     flex-wrap: wrap;
-    margin-bottom: 20px;
-    gap: 10px;
-  }
-
-  .header-actions {
-    display: contents;
-  }
-
-  .header-actions__row--auth {
-    width: 100%;
-    justify-content: center;
-    margin-top: 2px;
+    row-gap: 10px;
+    padding-top: 12px;
   }
 
   .brand {
-    gap: 10px;
+    width: 100%;
+    justify-content: center;
+    margin-right: 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--color-border);
+    border-radius: 0;
   }
 
   .brand__icon {
-    width: 38px;
-    height: 38px;
+    width: 40px;
+    height: 40px;
   }
 
   .brand__title {
-    font-size: 0.75rem;
+    font-size: 1rem;
   }
 
   .brand__byline {
     font-size: 0.75rem;
   }
 
-  .header-actions,
-  .header-actions__row {
-    gap: 6px;
+  .topbar-group--account {
+    margin-left: auto;
   }
+}
 
-  /* Icon-only Ko-fi on phones. */
-  .kofi-btn {
-    width: 34px;
-    height: 34px;
-    padding: 0;
-    justify-content: center;
-  }
-
-  .kofi-btn__label {
+/* Narrow phones: the account key keeps just its avatar */
+@media (max-width: 440px) {
+  .topbar-btn-label {
     display: none;
   }
 
-  .header-chip,
-  .header-btn {
-    height: 34px;
-    padding: 0 10px;
-    font-size: 0.8125rem;
+  .topbar-btn {
+    padding: 0 11px;
   }
 
-  .auth-user__name {
-    max-width: 160px;
-    font-size: 0.8125rem;
+  .account-btn {
+    padding: 0 8px 0 6px;
+  }
+
+  .topbar-group {
+    gap: 6px;
   }
 }

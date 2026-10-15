@@ -32,7 +32,7 @@ export default function AuthModal({ onClose }) {
         type="button"
         onClick={handleGoogleSignIn}
         disabled={loading}
-        className="btn btn--ghost auth-google"
+        className="btn btn--primary auth-google"
       >
         {!loading && (
           <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
